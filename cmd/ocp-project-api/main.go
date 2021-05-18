@@ -4,7 +4,28 @@ import (
 		"fmt"
 		"io"
 		"os/exec"
+		"strings"
 	)
+
+func runCommandWithInput(cmdName string, args string, input string) string {
+	cmd := exec.Command(cmdName, args)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return ""
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, input)
+	}()
+
+	stdout, err := cmd.CombinedOutput()
+	if err != nil {
+		return ""
+	}
+
+	return string(stdout)
+}
 
 func getCurrentVersion() string {
 	cmd := exec.Command("git", "tag", "--sort=committerdate")
@@ -15,25 +36,8 @@ func getCurrentVersion() string {
     }
 
     // Print the output
-    tags := string(stdout)
-
-	cmd = exec.Command("tr", "-n 1")
-    stdin, err := cmd.StdinPipe()
-    if err != nil {
-        return ""
-    }
-
-    go func() {
-        defer stdin.Close()
-        io.WriteString(stdin, tags)
-    }()
-
-    stdout, err = cmd.CombinedOutput()
-    if err != nil {
-        return ""
-    }
-
-    return string(stdout)
+    tag := runCommandWithInput("tail", "-n 1", string(stdout))
+    return strings.Trim(tag, "\n")
 }
 
 func main() {
