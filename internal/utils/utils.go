@@ -32,3 +32,23 @@ func ReverseKeyValue(m map[string]int) map[int]string {
 
 	return result
 }
+
+func FilterSlice(sl []string, blackList []string) []string {
+	var result []string
+
+	for _,str := range sl {
+		found := false
+		for _,blackStr := range blackList {
+			if (str == blackStr) {
+				found = true;
+				break;
+			}
+		}
+
+		if !found {
+			result = append(result, str)
+		}
+	}
+
+	return result
+}

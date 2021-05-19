@@ -92,3 +92,16 @@ func TestReverseKeyValue(t *testing.T) {
 	}
 	fmt.Println("Good result: ", res)
 }
+
+func TestFilterSlice(t *testing.T) {
+	var sl = []string{"a", "b", "c"}
+	var bl = []string{"a", "c"}
+
+	res := utils.FilterSlice(sl, bl)
+	if !reflect.DeepEqual(res, []string{"b"}) {
+		fmt.Println("Fail result: ", res)
+		t.Error("fail")
+		return
+	}
+	fmt.Println("Good result: ", res)
+}
