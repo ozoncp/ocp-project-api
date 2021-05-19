@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUtils(t *testing.T) {
+func TestSplitSlice(t *testing.T) {
 	array := []int{1,2,3,4,5,6}
 
 	n := 2
@@ -70,6 +70,22 @@ func TestUtils(t *testing.T) {
 
 	res = utils.SplitSlice(nilArray, n)
 	if !reflect.DeepEqual(res, make([][]int, 0)) {
+		fmt.Println("Fail result: ", res)
+		t.Error("fail")
+		return
+	}
+	fmt.Println("Good result: ", res)
+}
+
+func TestReverseKeyValue(t *testing.T) {
+	var m = map[string]int{}
+	m["a"] = 1
+	m["b"] = 2
+
+	correctAns := map[int]string{1: "a", 2: "b"}
+
+	res := utils.ReverseKeyValue(m)
+	if !reflect.DeepEqual(res, correctAns) {
 		fmt.Println("Fail result: ", res)
 		t.Error("fail")
 		return

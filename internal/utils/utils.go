@@ -22,3 +22,13 @@ func SplitSlice(sl []int, n int) [][]int {
 
 	return result
 }
+
+func ReverseKeyValue(m map[string]int) map[int]string {
+	var result = map[int]string{}
+
+	for key, value := range m {
+		result[value] = key
+	}
+
+	return result
+}
