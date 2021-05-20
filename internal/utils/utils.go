@@ -1,10 +1,10 @@
 package utils
 
-func SplitSlice(sl []int, n int) [][]int {
-	var result [][]int
+func SplitSlice(sl []interface{}, n int) [][]interface{} {
+	var result [][]interface{}
 
 	if n <= 0 || sl == nil {
-		return make([][]int, 0)
+		return nil
 	}
 
 	if n >= len(sl) {
@@ -26,6 +26,10 @@ func SplitSlice(sl []int, n int) [][]int {
 func ReverseKeyValue(m map[string]int) map[int]string {
 	var result = map[int]string{}
 
+	if m == nil {
+		return nil
+	}
+
 	for key, value := range m {
 		result[value] = key
 	}
@@ -33,20 +37,17 @@ func ReverseKeyValue(m map[string]int) map[int]string {
 	return result
 }
 
-func FilterSlice(sl []string, blackList []string) []string {
-	var result []string
+func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
+	var result []interface{}
 
-	for _,str := range sl {
-		found := false
-		for _,blackStr := range blackList {
-			if (str == blackStr) {
-				found = true;
-				break;
-			}
-		}
-
-		if !found {
-			result = append(result, str)
+	var blackMap = map[interface{}]bool{}
+	for _,item := range blackList {
+		blackMap[item] = true
+	}
+	
+	for _,item := range sl {
+		if _,found := blackMap[item]; !found {
+			result = append(result, item)
 		}
 	}
 
