@@ -1,5 +1,7 @@
 package utils
 
+import "fmt"
+
 func SplitSlice(sl []interface{}, n int) [][]interface{} {
 	var result [][]interface{}
 
@@ -31,6 +33,9 @@ func ReverseKeyValue(m map[string]int) map[int]string {
 	}
 
 	for key, value := range m {
+		if _, found := result[value]; found {
+			panic(fmt.Sprintf("Unsupported value: %v occurs more than once", value))
+		}
 		result[value] = key
 	}
 
@@ -44,7 +49,7 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 	for _,item := range blackList {
 		blackMap[item] = true
 	}
-	
+
 	for _,item := range sl {
 		if _,found := blackMap[item]; !found {
 			result = append(result, item)

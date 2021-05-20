@@ -3,6 +3,7 @@ package utils_test
 import (
 	"fmt"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
@@ -48,6 +49,9 @@ func TestReverseKeyValue(t *testing.T) {
 
 	for i, c := range testCases {
 		res := utils.ReverseKeyValue(c.Input)
+        if r := recover(); r != nil {
+            fmt.Println("Recovered in f", r)
+        }
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i + 1)
@@ -55,6 +59,8 @@ func TestReverseKeyValue(t *testing.T) {
 		}
 		fmt.Println("Good result: ", res)
 	}
+
+	assert.Panics(t, func() { utils.ReverseKeyValue(map[string]int{"a": 1, "b": 1}) }, "Fail panic test: The code did not panic")
 }
 
 func TestFilterSlice(t *testing.T) {
