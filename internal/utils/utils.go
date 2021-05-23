@@ -2,6 +2,7 @@ package utils
 
 import "fmt"
 
+// SplitSlice converts slice sl to slice of slices with n-size chunks
 func SplitSlice(sl []interface{}, n int) [][]interface{} {
 	var result [][]interface{}
 
@@ -25,6 +26,7 @@ func SplitSlice(sl []interface{}, n int) [][]interface{} {
 	return result
 }
 
+// ReverseKeyValue converts map m which maps key to value to map which maps value to key
 func ReverseKeyValue(m map[string]int) map[int]string {
 	var result = map[int]string{}
 
@@ -42,6 +44,7 @@ func ReverseKeyValue(m map[string]int) map[int]string {
 	return result
 }
 
+// FilterSlice returns slice with elements from sl which do not appear on the slice blackList
 func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 	var result []interface{}
 
