@@ -54,9 +54,6 @@ func TestReverseKeyValue(t *testing.T) {
 
 	for i, c := range testCases {
 		res := utils.ReverseKeyValue(c.Input)
-        if r := recover(); r != nil {
-            fmt.Println("Recovered in f", r)
-        }
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i + 1)
