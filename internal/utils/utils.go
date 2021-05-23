@@ -14,12 +14,12 @@ func SplitSlice(sl []interface{}, n int) [][]interface{} {
 		return append(result, sl)
 	}
 
-	count := len(sl)/n
-	for i := 0; i < count; i +=1 {
-		result = append(result, sl[i*n:i*n + n])
+	count := len(sl) / n
+	for i := 0; i < count; i += 1 {
+		result = append(result, sl[i*n:i*n+n])
 	}
 
-	if len(sl) % n != 0 {
+	if len(sl)%n != 0 {
 		result = append(result, sl[count*n:])
 	}
 
@@ -49,12 +49,12 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 	var result []interface{}
 
 	var blackMap = map[interface{}]bool{}
-	for _,item := range blackList {
+	for _, item := range blackList {
 		blackMap[item] = true
 	}
 
-	for _,item := range sl {
-		if _,found := blackMap[item]; !found {
+	for _, item := range sl {
+		if _, found := blackMap[item]; !found {
 			result = append(result, item)
 		}
 	}
