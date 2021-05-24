@@ -4,17 +4,16 @@ import "fmt"
 
 // SplitSlice converts slice sl to slice of slices with n-size chunks
 func SplitSlice(sl []interface{}, n int) [][]interface{} {
-	var result [][]interface{}
-
 	if n <= 0 || sl == nil {
 		return nil
 	}
-
 	if n >= len(sl) {
-		return append(result, sl)
+		return [][]interface{}{sl}
 	}
 
 	count := len(sl) / n
+	var result = make([][]interface{}, 0, count+len(sl)%n)
+
 	for i := 0; i < count; i += 1 {
 		result = append(result, sl[i*n:i*n+n])
 	}
@@ -28,11 +27,11 @@ func SplitSlice(sl []interface{}, n int) [][]interface{} {
 
 // ReverseKeyValue converts map m which maps key to value to map which maps value to key
 func ReverseKeyValue(m map[string]int) map[int]string {
-	var result = map[int]string{}
-
 	if m == nil {
 		return nil
 	}
+
+	var result = make(map[int]string, len(m))
 
 	for key, value := range m {
 		if _, found := result[value]; found {
@@ -48,9 +47,9 @@ func ReverseKeyValue(m map[string]int) map[int]string {
 func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 	var result []interface{}
 
-	var blackMap = map[interface{}]bool{}
+	var blackMap = map[interface{}]struct{}{}
 	for _, item := range blackList {
-		blackMap[item] = true
+		blackMap[item] = struct{}{}
 	}
 
 	for _, item := range sl {
