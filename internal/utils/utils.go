@@ -1,6 +1,10 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/ozoncp/ocp-project-api/internal/models"
+	"os"
+)
 
 // SplitSlice converts slice sl to slice of slices with n-size chunks
 func SplitSlice(sl []interface{}, n int) [][]interface{} {
@@ -56,6 +60,62 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 		if _, found := blackMap[item]; !found {
 			result = append(result, item)
 		}
+	}
+
+	return result
+}
+
+// LoopOpenClose open file with name fileName and make some magic with it in loop (usage functor and defer in loop)
+func LoopOpenClose(fileName string, msg string, count int) {
+	for i := 0; i < count; i++ {
+		func() {
+			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+			if err != nil {
+				return
+			}
+			defer f.Close()
+			// make something with file
+			f.WriteString(fmt.Sprintf("%s: loop count %d\n", msg, i))
+		}()
+	}
+}
+
+// SplitToBulks converts slice sl to slice of slices with butchSize-size chunks
+func SplitToBulks(sl []models.Artifact, butchSize uint) [][]models.Artifact {
+	if butchSize <= 0 || sl == nil {
+		return nil
+	}
+	if int(butchSize) >= len(sl) {
+		return [][]models.Artifact{sl}
+	}
+
+	count := len(sl) / int(butchSize)
+	var result = make([][]models.Artifact, 0, count+len(sl)%int(butchSize))
+
+	for i := 0; i < count; i += 1 {
+		result = append(result, sl[i*int(butchSize):i*int(butchSize)+int(butchSize)])
+	}
+
+	if len(sl)%int(butchSize) != 0 {
+		result = append(result, sl[count*int(butchSize):])
+	}
+
+	return result
+}
+
+// SliceToMap convert slice of structs sl to map with struct id as key and struct as value
+func SliceToMap(sl []models.Artifact) map[uint64]models.Artifact {
+	if sl == nil {
+		return nil
+	}
+
+	result := make(map[uint64]models.Artifact, len(sl))
+	for _, item := range sl {
+		if _, found := result[item.Id()]; found {
+			panic(fmt.Sprintf("Invalid slice of models: model with id %d occurs more than once", item.Id()))
+		}
+
+		result[item.Id()] = item
 	}
 
 	return result

@@ -1,10 +1,16 @@
 package utils_test
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"io/fs"
+	"os"
 	"reflect"
+	"syscall"
 	"testing"
 )
 
@@ -89,4 +95,187 @@ func TestFilterSlice(t *testing.T) {
 		}
 		fmt.Println("Good result: ", res)
 	}
+}
+
+func TestLoopOpenClose(t *testing.T) {
+	var (
+		fileName string = "test_looping.txt"
+		msg      string = "Test LoopOpenClose function"
+		count    int    = 10
+	)
+	if err := os.Remove(fileName); err != nil {
+		var pathError *fs.PathError
+		if !errors.As(err, &pathError) || pathError.Err != syscall.ENOENT {
+			t.Errorf("Fail test: can't remove artefact file")
+			return
+		}
+	}
+	utils.LoopOpenClose(fileName, msg, count)
+
+	f, err := os.Open(fileName)
+	if err != nil {
+		t.Errorf("Fail test: no file exists")
+		return
+	}
+
+	input := bufio.NewScanner(f)
+	for i := 0; i < count; i++ {
+		isOk := input.Scan()
+		if !isOk {
+			t.Errorf("Fail test: file scan error")
+			return
+		}
+
+		if !reflect.DeepEqual(input.Text(), fmt.Sprintf("%s: loop count %d", msg, i)) {
+			t.Errorf("Faile test: file content is invalid")
+			return
+		}
+	}
+	if os.Remove(fileName) != nil {
+		t.Errorf("Fail test: can't remove artefact file")
+		return
+	}
+}
+
+func TestSplitToBulksProject(t *testing.T) {
+	type TestCase struct {
+		InputSlice []models.Artifact
+		InputN     uint
+		Output     [][]models.Artifact
+	}
+
+	testCases := []TestCase{
+		{[]models.Artifact{
+			models.NewProject().Init(1, 1, "1"),
+			models.NewProject().Init(2, 2, "2"),
+			models.NewProject().Init(3, 3, "3"),
+			models.NewProject().Init(4, 4, "4"),
+			models.NewProject().Init(5, 5, "5"),
+			models.NewProject().Init(6, 6, "6"),
+		},
+			2,
+			[][]models.Artifact{
+				{
+					models.NewProject().Init(1, 1, "1"),
+					models.NewProject().Init(2, 2, "2"),
+				},
+				{
+					models.NewProject().Init(3, 3, "3"),
+					models.NewProject().Init(4, 4, "4"),
+				},
+				{
+					models.NewProject().Init(5, 5, "5"),
+					models.NewProject().Init(6, 6, "6"),
+				},
+			},
+		},
+		{[]models.Artifact{}, 2, [][]models.Artifact{{}}},
+		{[]models.Artifact{
+			models.NewProject().Init(1, 1, "1"),
+			models.NewProject().Init(2, 2, "2"),
+			models.NewProject().Init(3, 3, "3"),
+		}, 0, nil},
+		{nil, 2, nil},
+	}
+
+	for i, c := range testCases {
+		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		if !reflect.DeepEqual(res, c.Output) {
+			fmt.Println("Fail result: ", res)
+			t.Errorf("Fail test case %d\n", i+1)
+			return
+		}
+		fmt.Println("Good result: ", res)
+	}
+}
+
+func TestSplitToBulksRepo(t *testing.T) {
+	type TestCase struct {
+		InputSlice []models.Artifact
+		InputN     uint
+		Output     [][]models.Artifact
+	}
+
+	testCases := []TestCase{
+		{[]models.Artifact{
+			models.NewRepo().Init(1, 1, "1"),
+			models.NewRepo().Init(2, 2, "2"),
+			models.NewRepo().Init(3, 3, "3"),
+			models.NewRepo().Init(4, 4, "4"),
+			models.NewRepo().Init(5, 5, "5"),
+			models.NewRepo().Init(6, 6, "6"),
+		},
+			5,
+			[][]models.Artifact{
+				{
+					models.NewRepo().Init(1, 1, "1"),
+					models.NewRepo().Init(2, 2, "2"),
+					models.NewRepo().Init(3, 3, "3"),
+					models.NewRepo().Init(4, 4, "4"),
+					models.NewRepo().Init(5, 5, "5"),
+				},
+				{
+					models.NewRepo().Init(6, 6, "6"),
+				},
+			},
+		},
+	}
+
+	for i, c := range testCases {
+		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		if !reflect.DeepEqual(res, c.Output) {
+			fmt.Println("Fail result: ", res)
+			t.Errorf("Fail test case %d\n", i+1)
+			return
+		}
+		fmt.Println("Good result: ", res)
+	}
+}
+
+func TestSliceToMap(t *testing.T) {
+	type TestCase struct {
+		Input  []models.Artifact
+		Output map[uint64]models.Artifact
+	}
+
+	var testCases = []TestCase{
+		{[]models.Artifact{
+			models.NewRepo().Init(1, 1, "1"),
+			models.NewRepo().Init(2, 2, "2"),
+			models.NewRepo().Init(3, 3, "3"),
+			models.NewRepo().Init(4, 4, "4"),
+			models.NewRepo().Init(5, 5, "5"),
+			models.NewRepo().Init(6, 6, "6"),
+		},
+			map[uint64]models.Artifact{
+				1: models.NewRepo().Init(1, 1, "1"),
+				2: models.NewRepo().Init(2, 2, "2"),
+				3: models.NewRepo().Init(3, 3, "3"),
+				4: models.NewRepo().Init(4, 4, "4"),
+				5: models.NewRepo().Init(5, 5, "5"),
+				6: models.NewRepo().Init(6, 6, "6"),
+			},
+		},
+		{nil, nil},
+	}
+
+	for i, c := range testCases {
+		res := utils.SliceToMap(c.Input)
+		if !reflect.DeepEqual(res, c.Output) {
+			fmt.Println("Fail result: ", res)
+			t.Errorf("Fail test case %d\n", i+1)
+			return
+		}
+		fmt.Println("Good result: ", res)
+	}
+
+	assert.Panics(t,
+		func() {
+			var failSlice = []models.Artifact{
+				models.NewRepo().Init(2, 1, "1"),
+				models.NewRepo().Init(2, 2, "2"),
+			}
+			utils.SliceToMap(failSlice)
+		},
+		"Fail panic test: The code did not panic")
 }
