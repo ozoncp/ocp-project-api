@@ -73,7 +73,6 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 func LoopOpenClose(fileName string, msg string, count int) {
 	for i := 0; i < count; i++ {
 		func() {
-			os.Open()
 			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
 				return
