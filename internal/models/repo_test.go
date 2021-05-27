@@ -6,7 +6,7 @@ import (
 )
 
 func TestRepoInterface(t *testing.T) {
-	var m models.Artifact = models.NewRepo().Init(1, 2, "a")
+	var m models.Artifact = models.NewRepo().Init(1, 2, 3, "a")
 
 	if m, ok := m.(*models.Repo); ok {
 		if m.Id() != 1 {
@@ -17,7 +17,10 @@ func TestRepoInterface(t *testing.T) {
 			t.Errorf("Repo object returns invalid output by String()")
 			return
 		}
-		if m.UserId != 2 {
+		if m.ProjectId != 2 {
+			t.Errorf("Repo object has not that value of ProjectId")
+		}
+		if m.UserId != 3 {
 			t.Errorf("Repo object has not that value of UserId")
 			return
 		}
@@ -37,12 +40,15 @@ func TestRepoCreation(t *testing.T) {
 		t.Errorf("Failed creation Repo object")
 		return
 	}
-	m.Init(1, 2, "a")
+	m.Init(1, 2, 3, "a")
 	if m.Id() != 1 {
 		t.Errorf("Repo object has not that value of id")
 		return
 	}
-	if m.UserId != 2 {
+	if m.ProjectId != 2 {
+		t.Errorf("Repo object has not that value of ProjectId")
+	}
+	if m.UserId != 3 {
 		t.Errorf("Repo object has not that value of UserId")
 		return
 	}

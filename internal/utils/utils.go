@@ -16,13 +16,17 @@ func SplitSlice(sl []interface{}, n int) [][]interface{} {
 	}
 
 	count := len(sl) / n
-	var result = make([][]interface{}, 0, count+len(sl)%n)
+	addition := 0
+	if len(sl)%n != 0 {
+		addition = 1
+	}
+	var result = make([][]interface{}, 0, count+addition)
 
 	for i := 0; i < count; i += 1 {
 		result = append(result, sl[i*n:i*n+n])
 	}
 
-	if len(sl)%n != 0 {
+	if addition != 0 {
 		result = append(result, sl[count*n:])
 	}
 
@@ -69,6 +73,7 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 func LoopOpenClose(fileName string, msg string, count int) {
 	for i := 0; i < count; i++ {
 		func() {
+			os.Open()
 			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
 				return
@@ -90,13 +95,17 @@ func SplitToBulks(sl []models.Artifact, butchSize uint) [][]models.Artifact {
 	}
 
 	count := len(sl) / int(butchSize)
-	var result = make([][]models.Artifact, 0, count+len(sl)%int(butchSize))
+	addition := 0
+	if len(sl)%int(butchSize) != 0 {
+		addition = 1
+	}
+	var result = make([][]models.Artifact, 0, count+addition)
 
 	for i := 0; i < count; i += 1 {
 		result = append(result, sl[i*int(butchSize):i*int(butchSize)+int(butchSize)])
 	}
 
-	if len(sl)%int(butchSize) != 0 {
+	if addition != 0 {
 		result = append(result, sl[count*int(butchSize):])
 	}
 
