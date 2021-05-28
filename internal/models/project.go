@@ -12,16 +12,8 @@ type Project struct {
 	Name     string
 }
 
-func NewProject() *Project {
-	return &Project{}
-}
-
-func (p *Project) Init(id uint64, courseId uint64, name string) *Project {
-	p.id = id
-	p.CourseId = courseId
-	p.Name = name
-
-	return p
+func NewProject(id uint64, courseId uint64, name string) *Project {
+	return &Project{id, courseId, name}
 }
 
 func (p Project) String() string {

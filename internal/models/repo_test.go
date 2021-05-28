@@ -6,7 +6,7 @@ import (
 )
 
 func TestRepoInterface(t *testing.T) {
-	var m models.Artifact = models.NewRepo().Init(1, 2, 3, "a")
+	var m models.Artifact = models.NewRepo(1, 2, 3, "a")
 
 	if m, ok := m.(*models.Repo); ok {
 		if m.Id() != 1 {
@@ -35,12 +35,11 @@ func TestRepoInterface(t *testing.T) {
 }
 
 func TestRepoCreation(t *testing.T) {
-	var m = models.NewRepo()
+	var m = models.NewRepo(1, 2, 3, "a")
 	if m == nil {
 		t.Errorf("Failed creation Repo object")
 		return
 	}
-	m.Init(1, 2, 3, "a")
 	if m.Id() != 1 {
 		t.Errorf("Repo object has not that value of id")
 		return

@@ -6,7 +6,7 @@ import (
 )
 
 func TestProjectInterface(t *testing.T) {
-	var m models.Artifact = models.NewProject().Init(1, 2, "a")
+	var m models.Artifact = models.NewProject(1, 2, "a")
 
 	if m, ok := m.(*models.Project); ok {
 		if m.Id() != 1 {
@@ -32,12 +32,11 @@ func TestProjectInterface(t *testing.T) {
 }
 
 func TestProjectCreation(t *testing.T) {
-	var m = models.NewProject()
+	var m = models.NewProject(1, 2, "a")
 	if m == nil {
 		t.Errorf("Failed creation Project object")
 		return
 	}
-	m.Init(1, 2, "a")
 	if m.Id() != 1 {
 		t.Errorf("Project object has not that value of id")
 		return

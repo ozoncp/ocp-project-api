@@ -156,35 +156,35 @@ func TestSplitToBulksProject(t *testing.T) {
 	testCases := []TestCase{
 		{
 			[]models.Artifact{
-				models.NewProject().Init(1, 1, "1"),
-				models.NewProject().Init(2, 2, "2"),
-				models.NewProject().Init(3, 3, "3"),
-				models.NewProject().Init(4, 4, "4"),
-				models.NewProject().Init(5, 5, "5"),
-				models.NewProject().Init(6, 6, "6"),
+				models.NewProject(1, 1, "1"),
+				models.NewProject(2, 2, "2"),
+				models.NewProject(3, 3, "3"),
+				models.NewProject(4, 4, "4"),
+				models.NewProject(5, 5, "5"),
+				models.NewProject(6, 6, "6"),
 			},
 			2,
 			[][]models.Artifact{
 				{
-					models.NewProject().Init(1, 1, "1"),
-					models.NewProject().Init(2, 2, "2"),
+					models.NewProject(1, 1, "1"),
+					models.NewProject(2, 2, "2"),
 				},
 				{
-					models.NewProject().Init(3, 3, "3"),
-					models.NewProject().Init(4, 4, "4"),
+					models.NewProject(3, 3, "3"),
+					models.NewProject(4, 4, "4"),
 				},
 				{
-					models.NewProject().Init(5, 5, "5"),
-					models.NewProject().Init(6, 6, "6"),
+					models.NewProject(5, 5, "5"),
+					models.NewProject(6, 6, "6"),
 				},
 			},
 		},
 		{[]models.Artifact{}, 2, [][]models.Artifact{{}}},
 		{
 			[]models.Artifact{
-				models.NewProject().Init(1, 1, "1"),
-				models.NewProject().Init(2, 2, "2"),
-				models.NewProject().Init(3, 3, "3"),
+				models.NewProject(1, 1, "1"),
+				models.NewProject(2, 2, "2"),
+				models.NewProject(3, 3, "3"),
 			},
 			0,
 			nil,
@@ -213,24 +213,24 @@ func TestSplitToBulksRepo(t *testing.T) {
 	testCases := []TestCase{
 		{
 			[]models.Artifact{
-				models.NewRepo().Init(1, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
-				models.NewRepo().Init(3, 3, 3, "3"),
-				models.NewRepo().Init(4, 4, 4, "4"),
-				models.NewRepo().Init(5, 5, 5, "5"),
-				models.NewRepo().Init(6, 6, 6, "6"),
+				models.NewRepo(1, 1, 1, "1"),
+				models.NewRepo(2, 2, 2, "2"),
+				models.NewRepo(3, 3, 3, "3"),
+				models.NewRepo(4, 4, 4, "4"),
+				models.NewRepo(5, 5, 5, "5"),
+				models.NewRepo(6, 6, 6, "6"),
 			},
 			5,
 			[][]models.Artifact{
 				{
-					models.NewRepo().Init(1, 1, 1, "1"),
-					models.NewRepo().Init(2, 2, 2, "2"),
-					models.NewRepo().Init(3, 3, 3, "3"),
-					models.NewRepo().Init(4, 4, 4, "4"),
-					models.NewRepo().Init(5, 5, 5, "5"),
+					models.NewRepo(1, 1, 1, "1"),
+					models.NewRepo(2, 2, 2, "2"),
+					models.NewRepo(3, 3, 3, "3"),
+					models.NewRepo(4, 4, 4, "4"),
+					models.NewRepo(5, 5, 5, "5"),
 				},
 				{
-					models.NewRepo().Init(6, 6, 6, "6"),
+					models.NewRepo(6, 6, 6, "6"),
 				},
 			},
 		},
@@ -256,20 +256,20 @@ func TestSliceToMap(t *testing.T) {
 	var testCases = []TestCase{
 		{
 			[]models.Artifact{
-				models.NewRepo().Init(1, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
-				models.NewRepo().Init(3, 3, 3, "3"),
-				models.NewRepo().Init(4, 4, 4, "4"),
-				models.NewRepo().Init(5, 5, 5, "5"),
-				models.NewRepo().Init(6, 6, 6, "6"),
+				models.NewRepo(1, 1, 1, "1"),
+				models.NewRepo(2, 2, 2, "2"),
+				models.NewRepo(3, 3, 3, "3"),
+				models.NewRepo(4, 4, 4, "4"),
+				models.NewRepo(5, 5, 5, "5"),
+				models.NewRepo(6, 6, 6, "6"),
 			},
 			map[uint64]models.Artifact{
-				1: models.NewRepo().Init(1, 1, 1, "1"),
-				2: models.NewRepo().Init(2, 2, 2, "2"),
-				3: models.NewRepo().Init(3, 3, 3, "3"),
-				4: models.NewRepo().Init(4, 4, 4, "4"),
-				5: models.NewRepo().Init(5, 5, 5, "5"),
-				6: models.NewRepo().Init(6, 6, 6, "6"),
+				1: models.NewRepo(1, 1, 1, "1"),
+				2: models.NewRepo(2, 2, 2, "2"),
+				3: models.NewRepo(3, 3, 3, "3"),
+				4: models.NewRepo(4, 4, 4, "4"),
+				5: models.NewRepo(5, 5, 5, "5"),
+				6: models.NewRepo(6, 6, 6, "6"),
 			},
 		},
 		{nil, nil},
@@ -288,8 +288,8 @@ func TestSliceToMap(t *testing.T) {
 	assert.Panics(t,
 		func() {
 			var failSlice = []models.Artifact{
-				models.NewRepo().Init(2, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
+				models.NewRepo(2, 1, 1, "1"),
+				models.NewRepo(2, 2, 2, "2"),
 			}
 			utils.SliceToMap(failSlice)
 		},

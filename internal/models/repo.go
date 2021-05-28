@@ -13,17 +13,8 @@ type Repo struct {
 	Link      string
 }
 
-func NewRepo() *Repo {
-	return &Repo{}
-}
-
-func (r *Repo) Init(id uint64, projectId uint64, userId uint64, link string) *Repo {
-	r.id = id
-	r.ProjectId = projectId
-	r.UserId = userId
-	r.Link = link
-
-	return r
+func NewRepo(id uint64, projectId uint64, userId uint64, link string) *Repo {
+	return &Repo{id, projectId, userId, link}
 }
 
 func (r Repo) String() string {
