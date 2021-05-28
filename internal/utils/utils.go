@@ -70,18 +70,29 @@ func FilterSlice(sl []interface{}, blackList []interface{}) []interface{} {
 }
 
 // LoopOpenClose open file with name fileName and make some magic with it in loop (usage functor and defer in loop)
-func LoopOpenClose(fileName string, msg string, count int) {
+func LoopOpenClose(fileName string, msg string, count int) error {
 	for i := 0; i < count; i++ {
-		func() {
+		err := func() error {
 			f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
-				return
+				return err
 			}
 			defer f.Close()
 			// make something with file
-			f.WriteString(fmt.Sprintf("%s: loop count %d\n", msg, i))
+			_, err = f.WriteString(fmt.Sprintf("%s: loop count %d\n", msg, i))
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}()
+
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // SplitToBulks converts slice sl to slice of slices with butchSize-size chunks
