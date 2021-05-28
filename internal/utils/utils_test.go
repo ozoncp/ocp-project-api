@@ -103,6 +103,11 @@ func TestLoopOpenClose(t *testing.T) {
 		msg      string = "Test LoopOpenClose function"
 		count    int    = 10
 	)
+	err := utils.LoopOpenClose("", msg, count)
+	if err == nil {
+		t.Errorf("Fail test: function does not return error")
+		return
+	}
 	if err := os.Remove(fileName); err != nil {
 		var pathError *fs.PathError
 		if !errors.As(err, &pathError) || pathError.Err != syscall.ENOENT {
@@ -110,9 +115,13 @@ func TestLoopOpenClose(t *testing.T) {
 			return
 		}
 	}
-	utils.LoopOpenClose(fileName, msg, count)
+	err = utils.LoopOpenClose(fileName, msg, count)
+	if err != nil {
+		t.Errorf("Fail test: function returns error")
+	}
 
-	f, err := os.Open(fileName)
+	var f *os.File
+	f, err = os.Open(fileName)
 	if err != nil {
 		t.Errorf("Fail test: no file exists")
 		return
