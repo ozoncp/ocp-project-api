@@ -3,6 +3,8 @@ package flusher
 import (
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
+	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"log"
 )
 
 type Flusher interface {
@@ -26,17 +28,17 @@ type flusher struct {
 }
 
 func (f *flusher) Flush(objects []models.Artifact) []models.Artifact {
+	chunks, err := utils.SplitToBulks(objects, f.chunkSize)
+	if err != nil {
+		log.Printf("Flushing warning: %v\n", err)
+		return nil
+	}
 
-	for i := 0; i < len(objects); i += f.chunkSize {
-		j := i + f.chunkSize
-		if j >= len(objects) {
-			j = len(objects)
-		}
-
-		chunk := objects[i:j]
-		if err := f.objectRepo.AddObjects(chunk); err != nil {
-			return objects[i:]
+	for i := 0; i < len(chunks); i++ {
+		if err := f.objectRepo.AddObjects(chunks[i]); err != nil {
+			return objects[i*f.chunkSize:]
 		}
 	}
+
 	return nil
 }

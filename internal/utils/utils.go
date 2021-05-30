@@ -96,30 +96,33 @@ func LoopOpenClose(fileName string, msg string, count int) error {
 }
 
 // SplitToBulks converts slice sl to slice of slices with butchSize-size chunks
-func SplitToBulks(sl []models.Artifact, butchSize uint) [][]models.Artifact {
-	if butchSize <= 0 || sl == nil {
-		return nil
+func SplitToBulks(sl []models.Artifact, butchSize int) ([][]models.Artifact, error) {
+	if butchSize <= 0 {
+		return nil, fmt.Errorf("can't split slice: wrong butch size '%d'", butchSize)
 	}
-	if int(butchSize) >= len(sl) {
-		return [][]models.Artifact{sl}
+	if sl == nil {
+		return nil, fmt.Errorf("can't split slice: slice should not be nil")
+	}
+	if butchSize >= len(sl) {
+		return [][]models.Artifact{sl}, nil
 	}
 
-	count := len(sl) / int(butchSize)
+	count := len(sl) / butchSize
 	addition := 0
-	if len(sl)%int(butchSize) != 0 {
+	if len(sl)%butchSize != 0 {
 		addition = 1
 	}
 	var result = make([][]models.Artifact, 0, count+addition)
 
 	for i := 0; i < count; i += 1 {
-		result = append(result, sl[i*int(butchSize):i*int(butchSize)+int(butchSize)])
+		result = append(result, sl[i*butchSize:i*butchSize+butchSize])
 	}
 
 	if addition != 0 {
-		result = append(result, sl[count*int(butchSize):])
+		result = append(result, sl[count*butchSize:])
 	}
 
-	return result
+	return result, nil
 }
 
 // SliceToMap convert slice of structs sl to map with struct id as key and struct as value

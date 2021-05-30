@@ -149,7 +149,7 @@ func TestLoopOpenClose(t *testing.T) {
 func TestSplitToBulksProject(t *testing.T) {
 	type TestCase struct {
 		InputSlice []models.Artifact
-		InputN     uint
+		InputN     int
 		Output     [][]models.Artifact
 	}
 
@@ -193,7 +193,7 @@ func TestSplitToBulksProject(t *testing.T) {
 	}
 
 	for i, c := range testCases {
-		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		res, _ := utils.SplitToBulks(c.InputSlice, c.InputN)
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i+1)
@@ -206,7 +206,7 @@ func TestSplitToBulksProject(t *testing.T) {
 func TestSplitToBulksRepo(t *testing.T) {
 	type TestCase struct {
 		InputSlice []models.Artifact
-		InputN     uint
+		InputN     int
 		Output     [][]models.Artifact
 	}
 
@@ -237,7 +237,7 @@ func TestSplitToBulksRepo(t *testing.T) {
 	}
 
 	for i, c := range testCases {
-		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		res, _ := utils.SplitToBulks(c.InputSlice, c.InputN)
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i+1)
