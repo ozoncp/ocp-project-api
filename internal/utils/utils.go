@@ -95,8 +95,8 @@ func LoopOpenClose(fileName string, msg string, count int) error {
 	return nil
 }
 
-// SplitToBulks converts slice sl to slice of slices with butchSize-size chunks
-func SplitToBulks(sl []models.Artifact, butchSize int) ([][]models.Artifact, error) {
+// ReposSplitToBulks converts slice of models.Repo sl to slice of slices with butchSize-size chunks
+func ReposSplitToBulks(sl []models.Repo, butchSize int) ([][]models.Repo, error) {
 	if butchSize <= 0 {
 		return nil, fmt.Errorf("can't split slice: wrong butch size '%d'", butchSize)
 	}
@@ -104,7 +104,7 @@ func SplitToBulks(sl []models.Artifact, butchSize int) ([][]models.Artifact, err
 		return nil, fmt.Errorf("can't split slice: slice should not be nil")
 	}
 	if butchSize >= len(sl) {
-		return [][]models.Artifact{sl}, nil
+		return [][]models.Repo{sl}, nil
 	}
 
 	count := len(sl) / butchSize
@@ -112,7 +112,7 @@ func SplitToBulks(sl []models.Artifact, butchSize int) ([][]models.Artifact, err
 	if len(sl)%butchSize != 0 {
 		addition = 1
 	}
-	var result = make([][]models.Artifact, 0, count+addition)
+	var result = make([][]models.Repo, 0, count+addition)
 
 	for i := 0; i < count; i += 1 {
 		result = append(result, sl[i*butchSize:i*butchSize+butchSize])
@@ -125,19 +125,67 @@ func SplitToBulks(sl []models.Artifact, butchSize int) ([][]models.Artifact, err
 	return result, nil
 }
 
-// SliceToMap convert slice of structs sl to map with struct id as key and struct as value
-func SliceToMap(sl []models.Artifact) map[uint64]models.Artifact {
+// ProjectsSplitToBulks converts slice of models.Project sl to slice of slices with butchSize-size chunks
+func ProjectsSplitToBulks(sl []models.Project, butchSize int) ([][]models.Project, error) {
+	if butchSize <= 0 {
+		return nil, fmt.Errorf("can't split slice: wrong butch size '%d'", butchSize)
+	}
+	if sl == nil {
+		return nil, fmt.Errorf("can't split slice: slice should not be nil")
+	}
+	if butchSize >= len(sl) {
+		return [][]models.Project{sl}, nil
+	}
+
+	count := len(sl) / butchSize
+	addition := 0
+	if len(sl)%butchSize != 0 {
+		addition = 1
+	}
+	var result = make([][]models.Project, 0, count+addition)
+
+	for i := 0; i < count; i += 1 {
+		result = append(result, sl[i*butchSize:i*butchSize+butchSize])
+	}
+
+	if addition != 0 {
+		result = append(result, sl[count*butchSize:])
+	}
+
+	return result, nil
+}
+
+// ReposSliceToMap convert slice of models.Repo sl to map with struct id as key and struct as value
+func ReposSliceToMap(sl []models.Repo) map[uint64]models.Repo {
 	if sl == nil {
 		return nil
 	}
 
-	result := make(map[uint64]models.Artifact, len(sl))
+	result := make(map[uint64]models.Repo, len(sl))
 	for _, item := range sl {
-		if _, found := result[item.Id()]; found {
-			panic(fmt.Sprintf("Invalid slice of models: model with id %d occurs more than once", item.Id()))
+		if _, found := result[item.Id]; found {
+			panic(fmt.Sprintf("Invalid slice of models: model with id %d occurs more than once", item.Id))
 		}
 
-		result[item.Id()] = item
+		result[item.Id] = item
+	}
+
+	return result
+}
+
+// ProjectsSliceToMap convert slice of models.Project sl to map with struct id as key and struct as value
+func ProjectsSliceToMap(sl []models.Project) map[uint64]models.Project {
+	if sl == nil {
+		return nil
+	}
+
+	result := make(map[uint64]models.Project, len(sl))
+	for _, item := range sl {
+		if _, found := result[item.Id]; found {
+			panic(fmt.Sprintf("Invalid slice of models: model with id %d occurs more than once", item.Id))
+		}
+
+		result[item.Id] = item
 	}
 
 	return result

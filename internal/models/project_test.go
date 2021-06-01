@@ -6,47 +6,9 @@ import (
 )
 
 func TestProjectInterface(t *testing.T) {
-	var m models.Artifact = models.NewProject(1, 2, "a")
+	var m = models.Project{Id: 1, CourseId: 2, Name: "a"}
 
-	if m, ok := m.(*models.Project); ok {
-		if m.Id() != 1 {
-			t.Errorf("Project object has not that value of id")
-			return
-		}
-		if m.String() == "" {
-			t.Errorf("Project object returns invalid output by String()")
-			return
-		}
-		if m.CourseId != 2 {
-			t.Errorf("Project object has not that value of CourseId")
-			return
-		}
-		if m.Name != "a" {
-			t.Errorf("Project object has not that value of Name")
-			return
-		}
-	} else {
-		t.Errorf("Failed Project type declaration")
-		return
-	}
-}
-
-func TestProjectCreation(t *testing.T) {
-	var m = models.NewProject(1, 2, "a")
-	if m == nil {
-		t.Errorf("Failed creation Project object")
-		return
-	}
-	if m.Id() != 1 {
-		t.Errorf("Project object has not that value of id")
-		return
-	}
-	if m.CourseId != 2 {
-		t.Errorf("Project object has not that value of CourseId")
-		return
-	}
-	if m.Name != "a" {
-		t.Errorf("Project object has not that value of Name")
-		return
+	if len(m.String()) == 0 {
+		t.Fatalf("Project object function String() returns empty string")
 	}
 }

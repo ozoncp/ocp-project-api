@@ -34,16 +34,30 @@ func (m *MockFlusher) EXPECT() *MockFlusherMockRecorder {
 	return m.recorder
 }
 
-// Flush mocks base method.
-func (m *MockFlusher) Flush(arg0 []models.Artifact) []models.Artifact {
+// FlushProjects mocks base method.
+func (m *MockFlusher) FlushProjects(arg0 []models.Project) []models.Project {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Flush", arg0)
-	ret0, _ := ret[0].([]models.Artifact)
+	ret := m.ctrl.Call(m, "FlushProjects", arg0)
+	ret0, _ := ret[0].([]models.Project)
 	return ret0
 }
 
-// Flush indicates an expected call of Flush.
-func (mr *MockFlusherMockRecorder) Flush(arg0 interface{}) *gomock.Call {
+// FlushProjects indicates an expected call of FlushProjects.
+func (mr *MockFlusherMockRecorder) FlushProjects(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockFlusher)(nil).Flush), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushProjects", reflect.TypeOf((*MockFlusher)(nil).FlushProjects), arg0)
+}
+
+// FlushRepos mocks base method.
+func (m *MockFlusher) FlushRepos(arg0 []models.Repo) []models.Repo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FlushRepos", arg0)
+	ret0, _ := ret[0].([]models.Repo)
+	return ret0
+}
+
+// FlushRepos indicates an expected call of FlushRepos.
+func (mr *MockFlusherMockRecorder) FlushRepos(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushRepos", reflect.TypeOf((*MockFlusher)(nil).FlushRepos), arg0)
 }
