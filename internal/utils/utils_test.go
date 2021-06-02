@@ -103,6 +103,11 @@ func TestLoopOpenClose(t *testing.T) {
 		msg      string = "Test LoopOpenClose function"
 		count    int    = 10
 	)
+	err := utils.LoopOpenClose("", msg, count)
+	if err == nil {
+		t.Errorf("Fail test: function does not return error")
+		return
+	}
 	if err := os.Remove(fileName); err != nil {
 		var pathError *fs.PathError
 		if !errors.As(err, &pathError) || pathError.Err != syscall.ENOENT {
@@ -110,9 +115,13 @@ func TestLoopOpenClose(t *testing.T) {
 			return
 		}
 	}
-	utils.LoopOpenClose(fileName, msg, count)
+	err = utils.LoopOpenClose(fileName, msg, count)
+	if err != nil {
+		t.Errorf("Fail test: function returns error")
+	}
 
-	f, err := os.Open(fileName)
+	var f *os.File
+	f, err = os.Open(fileName)
 	if err != nil {
 		t.Errorf("Fail test: no file exists")
 		return
@@ -137,45 +146,69 @@ func TestLoopOpenClose(t *testing.T) {
 	}
 }
 
-func TestSplitToBulksProject(t *testing.T) {
+func TestProjectsSplitToBulks(t *testing.T) {
 	type TestCase struct {
-		InputSlice []models.Artifact
-		InputN     uint
-		Output     [][]models.Artifact
+		InputSlice []models.Project
+		InputN     int
+		Output     [][]models.Project
 	}
 
 	testCases := []TestCase{
 		{
-			[]models.Artifact{
-				models.NewProject().Init(1, 1, "1"),
-				models.NewProject().Init(2, 2, "2"),
-				models.NewProject().Init(3, 3, "3"),
-				models.NewProject().Init(4, 4, "4"),
-				models.NewProject().Init(5, 5, "5"),
-				models.NewProject().Init(6, 6, "6"),
+			[]models.Project{
+				{Id: 1, CourseId: 1, Name: "1"},
+				{Id: 2, CourseId: 2, Name: "1"},
+				{Id: 3, CourseId: 3, Name: "1"},
+				{Id: 4, CourseId: 4, Name: "1"},
+				{Id: 5, CourseId: 5, Name: "1"},
+				{Id: 6, CourseId: 6, Name: "1"},
 			},
 			2,
-			[][]models.Artifact{
+			[][]models.Project{
 				{
-					models.NewProject().Init(1, 1, "1"),
-					models.NewProject().Init(2, 2, "2"),
+					{Id: 1, CourseId: 1, Name: "1"},
+					{Id: 2, CourseId: 2, Name: "1"},
 				},
 				{
-					models.NewProject().Init(3, 3, "3"),
-					models.NewProject().Init(4, 4, "4"),
+					{Id: 3, CourseId: 3, Name: "1"},
+					{Id: 4, CourseId: 4, Name: "1"},
 				},
 				{
-					models.NewProject().Init(5, 5, "5"),
-					models.NewProject().Init(6, 6, "6"),
+					{Id: 5, CourseId: 5, Name: "1"},
+					{Id: 6, CourseId: 6, Name: "1"},
 				},
 			},
 		},
-		{[]models.Artifact{}, 2, [][]models.Artifact{{}}},
 		{
-			[]models.Artifact{
-				models.NewProject().Init(1, 1, "1"),
-				models.NewProject().Init(2, 2, "2"),
-				models.NewProject().Init(3, 3, "3"),
+			[]models.Project{
+				{Id: 1, CourseId: 1, Name: "1"},
+				{Id: 2, CourseId: 2, Name: "1"},
+				{Id: 3, CourseId: 3, Name: "1"},
+				{Id: 4, CourseId: 4, Name: "1"},
+				{Id: 5, CourseId: 5, Name: "1"},
+				{Id: 6, CourseId: 6, Name: "1"},
+			},
+			4,
+			[][]models.Project{
+				{
+					{Id: 1, CourseId: 1, Name: "1"},
+					{Id: 2, CourseId: 2, Name: "1"},
+					{Id: 3, CourseId: 3, Name: "1"},
+					{Id: 4, CourseId: 4, Name: "1"},
+				},
+				{
+					{Id: 5, CourseId: 5, Name: "1"},
+					{Id: 6, CourseId: 6, Name: "1"},
+				},
+			},
+		},
+
+		{[]models.Project{}, 2, [][]models.Project{{}}},
+		{
+			[]models.Project{
+				{Id: 1, CourseId: 1, Name: "1"},
+				{Id: 2, CourseId: 2, Name: "1"},
+				{Id: 3, CourseId: 3, Name: "1"},
 			},
 			0,
 			nil,
@@ -184,7 +217,7 @@ func TestSplitToBulksProject(t *testing.T) {
 	}
 
 	for i, c := range testCases {
-		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		res, _ := utils.ProjectsSplitToBulks(c.InputSlice, c.InputN)
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i+1)
@@ -194,41 +227,78 @@ func TestSplitToBulksProject(t *testing.T) {
 	}
 }
 
-func TestSplitToBulksRepo(t *testing.T) {
+func TestReposSplitToBulks(t *testing.T) {
 	type TestCase struct {
-		InputSlice []models.Artifact
-		InputN     uint
-		Output     [][]models.Artifact
+		InputSlice []models.Repo
+		InputN     int
+		Output     [][]models.Repo
 	}
 
 	testCases := []TestCase{
 		{
-			[]models.Artifact{
-				models.NewRepo().Init(1, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
-				models.NewRepo().Init(3, 3, 3, "3"),
-				models.NewRepo().Init(4, 4, 4, "4"),
-				models.NewRepo().Init(5, 5, 5, "5"),
-				models.NewRepo().Init(6, 6, 6, "6"),
+			[]models.Repo{
+				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+				{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+				{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+				{Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				{Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+				{Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
 			},
-			5,
-			[][]models.Artifact{
+			2,
+			[][]models.Repo{
 				{
-					models.NewRepo().Init(1, 1, 1, "1"),
-					models.NewRepo().Init(2, 2, 2, "2"),
-					models.NewRepo().Init(3, 3, 3, "3"),
-					models.NewRepo().Init(4, 4, 4, "4"),
-					models.NewRepo().Init(5, 5, 5, "5"),
+					{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+					{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
 				},
 				{
-					models.NewRepo().Init(6, 6, 6, "6"),
+					{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+					{Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				},
+				{
+					{Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+					{Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
 				},
 			},
 		},
+		{
+			[]models.Repo{
+				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+				{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+				{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+				{Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				{Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+				{Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
+			},
+			4,
+			[][]models.Repo{
+				{
+					{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+					{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+					{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+					{Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				},
+				{
+					{Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+					{Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
+				},
+			},
+		},
+
+		{[]models.Repo{}, 2, [][]models.Repo{{}}},
+		{
+			[]models.Repo{
+				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+				{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+				{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+			},
+			0,
+			nil,
+		},
+		{nil, 2, nil},
 	}
 
 	for i, c := range testCases {
-		res := utils.SplitToBulks(c.InputSlice, c.InputN)
+		res, _ := utils.ReposSplitToBulks(c.InputSlice, c.InputN)
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i+1)
@@ -238,36 +308,36 @@ func TestSplitToBulksRepo(t *testing.T) {
 	}
 }
 
-func TestSliceToMap(t *testing.T) {
+func TestReposSliceToMap(t *testing.T) {
 	type TestCase struct {
-		Input  []models.Artifact
-		Output map[uint64]models.Artifact
+		Input  []models.Repo
+		Output map[uint64]models.Repo
 	}
 
 	var testCases = []TestCase{
 		{
-			[]models.Artifact{
-				models.NewRepo().Init(1, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
-				models.NewRepo().Init(3, 3, 3, "3"),
-				models.NewRepo().Init(4, 4, 4, "4"),
-				models.NewRepo().Init(5, 5, 5, "5"),
-				models.NewRepo().Init(6, 6, 6, "6"),
+			[]models.Repo{
+				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+				{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+				{Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+				{Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				{Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+				{Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
 			},
-			map[uint64]models.Artifact{
-				1: models.NewRepo().Init(1, 1, 1, "1"),
-				2: models.NewRepo().Init(2, 2, 2, "2"),
-				3: models.NewRepo().Init(3, 3, 3, "3"),
-				4: models.NewRepo().Init(4, 4, 4, "4"),
-				5: models.NewRepo().Init(5, 5, 5, "5"),
-				6: models.NewRepo().Init(6, 6, 6, "6"),
+			map[uint64]models.Repo{
+				1: {Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+				2: {Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
+				3: {Id: 3, ProjectId: 3, UserId: 3, Link: "3"},
+				4: {Id: 4, ProjectId: 4, UserId: 4, Link: "4"},
+				5: {Id: 5, ProjectId: 5, UserId: 5, Link: "5"},
+				6: {Id: 6, ProjectId: 6, UserId: 6, Link: "6"},
 			},
 		},
 		{nil, nil},
 	}
 
 	for i, c := range testCases {
-		res := utils.SliceToMap(c.Input)
+		res := utils.ReposSliceToMap(c.Input)
 		if !reflect.DeepEqual(res, c.Output) {
 			fmt.Println("Fail result: ", res)
 			t.Errorf("Fail test case %d\n", i+1)
@@ -278,11 +348,60 @@ func TestSliceToMap(t *testing.T) {
 
 	assert.Panics(t,
 		func() {
-			var failSlice = []models.Artifact{
-				models.NewRepo().Init(2, 1, 1, "1"),
-				models.NewRepo().Init(2, 2, 2, "2"),
+			var failSlice = []models.Repo{
+				{Id: 2, ProjectId: 1, UserId: 1, Link: "1"},
+				{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
 			}
-			utils.SliceToMap(failSlice)
+			utils.ReposSliceToMap(failSlice)
+		},
+		"Fail panic test: The code did not panic")
+}
+
+func TestProjectsSliceToMap(t *testing.T) {
+	type TestCase struct {
+		Input  []models.Project
+		Output map[uint64]models.Project
+	}
+
+	var testCases = []TestCase{
+		{
+			[]models.Project{
+				{Id: 1, CourseId: 1, Name: "1"},
+				{Id: 2, CourseId: 2, Name: "1"},
+				{Id: 3, CourseId: 3, Name: "1"},
+				{Id: 4, CourseId: 4, Name: "1"},
+				{Id: 5, CourseId: 5, Name: "1"},
+				{Id: 6, CourseId: 6, Name: "1"},
+			},
+			map[uint64]models.Project{
+				1: {Id: 1, CourseId: 1, Name: "1"},
+				2: {Id: 2, CourseId: 2, Name: "1"},
+				3: {Id: 3, CourseId: 3, Name: "1"},
+				4: {Id: 4, CourseId: 4, Name: "1"},
+				5: {Id: 5, CourseId: 5, Name: "1"},
+				6: {Id: 6, CourseId: 6, Name: "1"},
+			},
+		},
+		{nil, nil},
+	}
+
+	for i, c := range testCases {
+		res := utils.ProjectsSliceToMap(c.Input)
+		if !reflect.DeepEqual(res, c.Output) {
+			fmt.Println("Fail result: ", res)
+			t.Errorf("Fail test case %d\n", i+1)
+			return
+		}
+		fmt.Println("Good result: ", res)
+	}
+
+	assert.Panics(t,
+		func() {
+			var failSlice = []models.Project{
+				{Id: 2, CourseId: 1, Name: "1"},
+				{Id: 2, CourseId: 2, Name: "1"},
+			}
+			utils.ProjectsSliceToMap(failSlice)
 		},
 		"Fail panic test: The code did not panic")
 }
