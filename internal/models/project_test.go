@@ -9,6 +9,6 @@ func TestProjectInterface(t *testing.T) {
 	var m = models.Project{Id: 1, CourseId: 2, Name: "a"}
 
 	if len(m.String()) == 0 {
-		t.Fatalf("Project object function String() returns empty string")
+		t.Errorf("Project object function String() returns empty string")
 	}
 }
