@@ -39,6 +39,7 @@ func (a *alarm) startAlarm() {
 				timer = time.After(a.timeout)
 			case <-a.done:
 				close(a.c)
+				close(a.done)
 				return
 			}
 		}

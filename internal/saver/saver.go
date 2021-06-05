@@ -19,7 +19,7 @@ const (
 	CleanAll
 )
 
-func NewSaver(capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
+func NewSaver(capacity int, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
 	s := &saver{
 		alarm:       alarm,
 		capacity:    capacity,
@@ -37,7 +37,7 @@ func NewSaver(capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPo
 
 type saver struct {
 	alarm       alarm.Alarm
-	capacity    uint
+	capacity    int
 	projects    chan models.Project
 	repos       chan models.Repo
 	flusher     flusher.Flusher
@@ -60,7 +60,7 @@ func (s *saver) flushingLoop() {
 	for {
 		select {
 		case project := <-s.projects:
-			if len(projects) == cap(projects) {
+			if len(projects) == s.capacity {
 				if s.cleanPolicy == CleanOne {
 					projects = projects[1:]
 				} else {
@@ -70,7 +70,7 @@ func (s *saver) flushingLoop() {
 			projects = append(projects, project)
 
 		case repo := <-s.repos:
-			if len(repos) == cap(repos) {
+			if len(repos) == s.capacity {
 				if s.cleanPolicy == CleanOne {
 					repos = repos[1:]
 				} else {
