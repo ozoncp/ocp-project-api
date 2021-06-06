@@ -20,14 +20,18 @@ const (
 )
 
 func NewSaver(capacity int, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
+	projects := make(chan models.Project, capacity)
+	repos := make(chan models.Repo, capacity)
+	done := make(chan struct{})
+
 	s := &saver{
 		alarm:       alarm,
 		capacity:    capacity,
-		projects:    make(chan models.Project, capacity),
-		repos:       make(chan models.Repo, capacity),
+		projects:    projects,
+		repos:       repos,
 		flusher:     flusher,
 		cleanPolicy: cleanPolicy,
-		done:        make(chan struct{}),
+		done:        done,
 	}
 
 	go s.flushingLoop()
@@ -50,20 +54,30 @@ func (s *saver) flushingLoop() {
 	repos := make([]models.Repo, 0, s.capacity)
 
 	alarms := s.alarm.Alarms()
-	defer s.alarm.Close()
 
 	flushAll := func() {
-		s.flusher.FlushProjects(projects)
-		s.flusher.FlushRepos(repos)
+		restProjects := s.flusher.FlushProjects(projects)
+		if restProjects != nil {
+			projects = restProjects
+		} else {
+			projects = projects[:0]
+		}
+		restRepos := s.flusher.FlushRepos(repos)
+		if restRepos != nil {
+			repos = restRepos
+		} else {
+			repos = repos[:0]
+		}
 	}
 
 	for {
 		select {
 		case project := <-s.projects:
 			if len(projects) == s.capacity {
-				if s.cleanPolicy == CleanOne {
+				switch s.cleanPolicy {
+				case CleanOne:
 					projects = projects[1:]
-				} else {
+				case CleanAll:
 					projects = projects[:0]
 				}
 			}
@@ -71,9 +85,10 @@ func (s *saver) flushingLoop() {
 
 		case repo := <-s.repos:
 			if len(repos) == s.capacity {
-				if s.cleanPolicy == CleanOne {
+				switch s.cleanPolicy {
+				case CleanOne:
 					repos = repos[1:]
-				} else {
+				case CleanAll:
 					repos = repos[:0]
 				}
 			}
@@ -83,6 +98,9 @@ func (s *saver) flushingLoop() {
 			flushAll()
 		case <-s.done:
 			flushAll()
+			close(s.projects)
+			close(s.repos)
+			close(s.done)
 			return
 		}
 	}

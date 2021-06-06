@@ -3,15 +3,10 @@ package saver_test
 import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 
 	"github.com/ozoncp/ocp-project-api/internal/saver"
-)
-
-const (
-	capacity = 10
 )
 
 var _ = Describe("Saver", func() {
@@ -36,33 +31,112 @@ var _ = Describe("Saver", func() {
 
 		alarms = make(chan struct{})
 		mockAlarm.EXPECT().Alarms().Return(alarms).AnyTimes()
-
-		s = saver.NewSaver(capacity, mockAlarm, mockFlusher, saver.CleanOne)
-	})
-
-	JustBeforeEach(func() {
-		s.SaveProject(project)
-		s.SaveRepo(repo)
 	})
 
 	AfterEach(func() {
-		s.Close()
 		ctrl.Finish()
 	})
 
-	Context("alarm imitation", func() {
+	Context("simple alarm imitation", func() {
 
 		BeforeEach(func() {
-			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return(nil).MinTimes(1).Times(1)
-			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return(nil).MinTimes(1).Times(1)
+			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return(nil).MinTimes(1)
 		})
 
 		JustBeforeEach(func() {
 			alarms <- struct{}{}
 		})
 
+		AfterEach(func() {
+			s.Close()
+		})
+
 		It("", func() {
-			Expect(project).Should(Equal(project))
 		})
 	})
+
+	Context("clean all policy", func() {
+
+		BeforeEach(func() {
+			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanAll)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			mockFlusher.EXPECT().FlushRepos(gomock.Len(1)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushProjects(gomock.Len(1)).Return(nil).Times(1)
+		})
+
+		JustBeforeEach(func() {
+			alarms <- struct{}{}
+		})
+
+		AfterEach(func() {
+			s.Close()
+		})
+
+		It("", func() {
+		})
+	})
+
+	Context("clean one policy", func() {
+
+		BeforeEach(func() {
+			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			mockFlusher.EXPECT().FlushRepos(gomock.Len(2)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushProjects(gomock.Len(2)).Return(nil).Times(1)
+		})
+
+		JustBeforeEach(func() {
+			alarms <- struct{}{}
+		})
+
+		AfterEach(func() {
+			s.Close()
+		})
+
+		It("", func() {
+		})
+	})
+
+	Context("flushing on close without alarm", func() {
+
+		BeforeEach(func() {
+			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return(nil).MinTimes(1)
+		})
+
+		JustBeforeEach(func() {
+			s.Close()
+		})
+
+		It("", func() {
+		})
+	})
+
 })

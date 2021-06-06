@@ -61,13 +61,13 @@ func (mr *MockAlarmMockRecorder) Close() *gomock.Call {
 }
 
 // NewTimeout mocks base method.
-func (m *MockAlarm) NewTimeout(arg0 time.Duration) {
+func (m *MockAlarm) ResetTimeout(arg0 time.Duration) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "NewTimeout", arg0)
+	m.ctrl.Call(m, "ResetTimeout", arg0)
 }
 
 // NewTimeout indicates an expected call of NewTimeout.
 func (mr *MockAlarmMockRecorder) NewTimeout(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewTimeout", reflect.TypeOf((*MockAlarm)(nil).NewTimeout), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetTimeout", reflect.TypeOf((*MockAlarm)(nil).ResetTimeout), arg0)
 }

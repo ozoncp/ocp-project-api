@@ -1,3 +1,4 @@
+// !test
 package alarm_test
 
 import (
@@ -34,7 +35,7 @@ func TestAlarm(t *testing.T) {
 	}
 
 	a = alarm.NewAlarm(time.Second * 1)
-	a.NewTimeout(time.Second * 3)
+	a.ResetTimeout(time.Second * 3)
 
 	alarms = a.Alarms()
 
@@ -51,6 +52,8 @@ func TestAlarm(t *testing.T) {
 		}
 	}
 	if count != wanted {
-		t.Errorf("NewTimeout: Alarmer is very fast or lazy, got count of alarms = %d, wanted = %d\n", count, wanted)
+		t.Errorf(
+			"ResetTimeout: Alarmer is very fast or lazy, got count of alarms = %d, wanted = %d\n",
+			count, wanted)
 	}
 }
