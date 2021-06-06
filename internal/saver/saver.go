@@ -50,6 +50,8 @@ type saver struct {
 }
 
 func (s *saver) flushingLoop() {
+	//	defer ginkgo.GinkgoRecover()
+
 	projects := make([]models.Project, 0, s.capacity)
 	repos := make([]models.Repo, 0, s.capacity)
 

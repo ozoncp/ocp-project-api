@@ -1,4 +1,5 @@
-// !test
+// +build alarm
+
 package alarm_test
 
 import (

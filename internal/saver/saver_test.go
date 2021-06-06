@@ -5,7 +5,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
-
 	"github.com/ozoncp/ocp-project-api/internal/saver"
 )
 
@@ -132,6 +131,29 @@ var _ = Describe("Saver", func() {
 		})
 
 		JustBeforeEach(func() {
+			s.Close()
+		})
+
+		It("", func() {
+		})
+	})
+
+	Context("not all flushed", func() {
+
+		BeforeEach(func() {
+			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+			s.SaveProject(project)
+			s.SaveRepo(repo)
+
+			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return([]models.Repo{{}}).Times(1)
+			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return([]models.Project{{}}).Times(1)
+		})
+
+		JustBeforeEach(func() {
+			alarms <- struct{}{}
+		})
+
+		AfterEach(func() {
 			s.Close()
 		})
 
