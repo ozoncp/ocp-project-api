@@ -1,0 +1,83 @@
+
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package ocp.task.api;
+
+option go_package = "gihtub.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
+
+// Описание задачи
+
+service OcpProjectApi {
+
+  // Return projects list
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {
+      get: "/projects"
+    };
+  }
+
+  // Return projects description by it id
+  rpc DescribeProject(DescribeProjectRequest) returns (DescribeProjectResponse) {
+    option (google.api.http) = {
+      get: "/projects/{project_id}"
+    };
+  }
+
+  // Create new project
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/projects/{course_id}/{name}"
+    };
+  }
+
+  // Remove project by id
+  rpc RemoveProject(RemoveProjectRequest) returns (RemoveProjectResponse) {
+    option (google.api.http) = {
+      delete: "/projects/{project_id}"
+    };
+  }
+}
+
+message ListProjectsRequest {
+  uint64 limit = 1;
+  uint64 offset = 2;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+}
+
+message CreateProjectRequest {
+  uint64 course_id = 1 [(validate.rules).uint64.gt = 0];
+  string name = 2;
+}
+
+message CreateProjectResponse {
+  uint64 project_id = 1;
+}
+
+message RemoveProjectRequest {
+  uint64 project_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message RemoveProjectResponse {
+  bool found = 1;
+}
+
+message DescribeProjectRequest {
+  uint64 project_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeProjectResponse {
+  Project project = 1;
+}
+
+// Project description
+message Project {
+  uint64 id = 1;
+  uint64 courseId = 2;
+  string name = 3;
+}
