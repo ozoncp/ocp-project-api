@@ -3,6 +3,7 @@ module github.com/ozoncp/ocp-project-api
 go 1.16
 
 require (
+	github.com/envoyproxy/protoc-gen-validate v0.6.1 // indirect
 	github.com/golang/mock v1.5.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/onsi/ginkgo v1.16.2
