@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/rs/zerolog/log"
 
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
 
@@ -28,6 +29,8 @@ func (a *api) ListProjects(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
+
 	err := status.Error(codes.NotFound, errProjectListEmpty)
 	return nil, err
 }
@@ -41,6 +44,8 @@ func (a *api) DescribeProject(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
+
 	err := status.Error(codes.NotFound, errProjectNotFound)
 	return nil, err
 }
@@ -53,6 +58,8 @@ func (a *api) CreateProject(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
+
 	err := status.Error(codes.NotFound, errProjectCreate)
 	return nil, err
 }
@@ -64,6 +71,8 @@ func (a *api) RemoveProject(
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
+	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
 
 	err := status.Error(codes.NotFound, errProjectRemove)
 	return nil, err
