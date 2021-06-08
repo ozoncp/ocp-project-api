@@ -19,7 +19,7 @@ PHONY: .generate
 
 PHONY: .build
 .build:
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go
+		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
 
 PHONY: install
 install: build .install
@@ -63,8 +63,4 @@ install-go-deps: .install-go-deps
 		go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 		go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
 		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
-		tmpdir=$$(mktemp -d); cd $$tmpdir && export GO111MODULE=off \
-		  && go get -d github.com/envoyproxy/protoc-gen-validate \
-			&& cd $$(go env GOPATH)/src/github.com/envoyproxy/protoc-gen-validate && git checkout v0.1.0 \
-			&& go build -o $$(go env GOPATH)/bin/protoc-gen-validate $$(go env GOPATH)/src/github.com/envoyproxy/protoc-gen-validate/main.go \
-			&& cd -
+		go install github.com/envoyproxy/protoc-gen-validate

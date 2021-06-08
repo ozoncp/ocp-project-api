@@ -78,6 +78,6 @@ message DescribeProjectResponse {
 // Project description
 message Project {
   uint64 id = 1;
-  uint64 courseId = 2;
+  uint64 course_id = 2;
   string name = 3;
 }
