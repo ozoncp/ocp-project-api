@@ -19,7 +19,7 @@ const (
 	CleanAll
 )
 
-func NewSaver(capacity int, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
+func NewSaver(capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
 	projects := make(chan models.Project, capacity)
 	repos := make(chan models.Repo, capacity)
 	done := make(chan struct{})
@@ -41,7 +41,7 @@ func NewSaver(capacity int, alarm alarm.Alarm, flusher flusher.Flusher, cleanPol
 
 type saver struct {
 	alarm       alarm.Alarm
-	capacity    int
+	capacity    uint
 	projects    chan models.Project
 	repos       chan models.Repo
 	flusher     flusher.Flusher
@@ -50,8 +50,6 @@ type saver struct {
 }
 
 func (s *saver) flushingLoop() {
-	//	defer ginkgo.GinkgoRecover()
-
 	projects := make([]models.Project, 0, s.capacity)
 	repos := make([]models.Repo, 0, s.capacity)
 
@@ -75,7 +73,7 @@ func (s *saver) flushingLoop() {
 	for {
 		select {
 		case project := <-s.projects:
-			if len(projects) == s.capacity {
+			if len(projects) == int(s.capacity) {
 				switch s.cleanPolicy {
 				case CleanOne:
 					projects = projects[1:]
@@ -86,7 +84,7 @@ func (s *saver) flushingLoop() {
 			projects = append(projects, project)
 
 		case repo := <-s.repos:
-			if len(repos) == s.capacity {
+			if len(repos) == int(s.capacity) {
 				switch s.cleanPolicy {
 				case CleanOne:
 					repos = repos[1:]
