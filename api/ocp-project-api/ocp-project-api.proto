@@ -29,7 +29,7 @@ service OcpProjectApi {
   // Create new project
   rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
     option (google.api.http) = {
-      post: "/projects/{course_id}/{name}"
+      post: "/projects"
     };
   }
 
