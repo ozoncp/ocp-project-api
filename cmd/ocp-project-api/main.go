@@ -1,11 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"flag"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	fmt.Println("Hello, I'm ocp-project-api service!")
-	utils.LoopOpenClose("test.txt", "Write some msg", 10)
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	debug := flag.Bool("debug", false, "sets log level to debug")
+
+	flag.Parse()
+
+	// Default level is info, unless debug flag is present
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	if *debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+
+	if err := runGrpcAndGateway(); err != nil {
+		log.Fatal().Msgf("Something went wrong: %v", err)
+	}
 }
