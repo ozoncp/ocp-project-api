@@ -1,15 +1,18 @@
 package saver_test
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/saver"
+	"time"
 )
 
 var _ = Describe("Saver", func() {
 	var (
+		ctx  context.Context
 		ctrl *gomock.Controller
 
 		mockFlusher *mocks.MockFlusher
@@ -23,6 +26,7 @@ var _ = Describe("Saver", func() {
 	)
 
 	BeforeEach(func() {
+		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 
 		mockAlarm = mocks.NewMockAlarm(ctrl)
@@ -37,9 +41,13 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("simple alarm imitation", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			s = saver.NewSaver(ctx, 2, mockAlarm, mockFlusher, saver.CleanOne, "simple alarm imitation")
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
@@ -52,6 +60,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		AfterEach(func() {
+			cancelFunc()
 			s.Close()
 		})
 
@@ -60,9 +69,13 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("clean all policy", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanAll)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			s = saver.NewSaver(ctx, 2, mockAlarm, mockFlusher, saver.CleanAll, "clean all policy")
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
@@ -75,6 +88,8 @@ var _ = Describe("Saver", func() {
 
 			mockFlusher.EXPECT().FlushRepos(gomock.Len(1)).Return(nil).Times(1)
 			mockFlusher.EXPECT().FlushProjects(gomock.Len(1)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushRepos(gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushProjects(gomock.Len(0)).Return(nil).AnyTimes()
 		})
 
 		JustBeforeEach(func() {
@@ -82,6 +97,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		AfterEach(func() {
+			cancelFunc()
 			s.Close()
 		})
 
@@ -90,9 +106,13 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("clean one policy", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			s = saver.NewSaver(ctx, 2, mockAlarm, mockFlusher, saver.CleanOne, "clean one policy")
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
@@ -105,6 +125,9 @@ var _ = Describe("Saver", func() {
 
 			mockFlusher.EXPECT().FlushRepos(gomock.Len(2)).Return(nil).Times(1)
 			mockFlusher.EXPECT().FlushProjects(gomock.Len(2)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushRepos(gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushProjects(gomock.Len(0)).Return(nil).AnyTimes()
+
 		})
 
 		JustBeforeEach(func() {
@@ -112,6 +135,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		AfterEach(func() {
+			cancelFunc()
 			s.Close()
 		})
 
@@ -120,9 +144,13 @@ var _ = Describe("Saver", func() {
 	})
 
 	Context("flushing on close without alarm", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			s = saver.NewSaver(ctx, 2, mockAlarm, mockFlusher, saver.CleanOne, "flushing on close without alarm")
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
@@ -131,22 +159,28 @@ var _ = Describe("Saver", func() {
 		})
 
 		JustBeforeEach(func() {
+			cancelFunc()
 			s.Close()
 		})
 
 		It("", func() {
+			time.Sleep(time.Second * 2)
 		})
 	})
 
 	Context("not all flushed", func() {
+		var (
+			cancelFunc context.CancelFunc
+		)
 
 		BeforeEach(func() {
-			s = saver.NewSaver(2, mockAlarm, mockFlusher, saver.CleanOne)
+			ctx, cancelFunc = context.WithCancel(ctx)
+			s = saver.NewSaver(ctx, 2, mockAlarm, mockFlusher, saver.CleanOne, "not all flushed")
 			s.SaveProject(project)
 			s.SaveRepo(repo)
 
-			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return([]models.Repo{{}}).Times(1)
-			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return([]models.Project{{}}).Times(1)
+			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return([]models.Repo{{}}).MinTimes(1)
+			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return([]models.Project{{}}).MinTimes(1)
 		})
 
 		JustBeforeEach(func() {
@@ -154,6 +188,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		AfterEach(func() {
+			cancelFunc()
 			s.Close()
 		})
 

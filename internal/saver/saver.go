@@ -1,6 +1,7 @@
 package saver
 
 import (
+	"context"
 	"github.com/ozoncp/ocp-project-api/internal/alarm"
 	"github.com/ozoncp/ocp-project-api/internal/flusher"
 	"github.com/ozoncp/ocp-project-api/internal/models"
@@ -19,7 +20,7 @@ const (
 	CleanAll
 )
 
-func NewSaver(capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy) Saver {
+func NewSaver(ctx context.Context, capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPolicy CleanPolicy, name string) Saver {
 	projects := make(chan models.Project, capacity)
 	repos := make(chan models.Repo, capacity)
 	done := make(chan struct{})
@@ -32,9 +33,10 @@ func NewSaver(capacity uint, alarm alarm.Alarm, flusher flusher.Flusher, cleanPo
 		flusher:     flusher,
 		cleanPolicy: cleanPolicy,
 		done:        done,
+		name:        name,
 	}
 
-	go s.flushingLoop()
+	go s.flushingLoop(ctx)
 
 	return s
 }
@@ -47,9 +49,10 @@ type saver struct {
 	flusher     flusher.Flusher
 	cleanPolicy CleanPolicy
 	done        chan struct{}
+	name        string
 }
 
-func (s *saver) flushingLoop() {
+func (s *saver) flushingLoop(ctx context.Context) {
 	projects := make([]models.Project, 0, s.capacity)
 	repos := make([]models.Repo, 0, s.capacity)
 
@@ -96,11 +99,11 @@ func (s *saver) flushingLoop() {
 
 		case <-alarms:
 			flushAll()
-		case <-s.done:
+		case <-ctx.Done():
 			flushAll()
 			close(s.projects)
 			close(s.repos)
-			close(s.done)
+			s.done <- struct{}{}
 			return
 		}
 	}
@@ -116,5 +119,5 @@ func (s *saver) SaveRepo(repo models.Repo) {
 }
 
 func (s *saver) Close() {
-	s.done <- struct{}{}
+	<-s.done
 }
