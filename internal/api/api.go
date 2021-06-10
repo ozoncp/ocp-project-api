@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
 
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
@@ -19,6 +20,7 @@ const (
 
 type api struct {
 	desc.UnimplementedOcpProjectApiServer
+	projectStorage storage.ProjectStorage
 }
 
 func (a *api) ListProjects(
@@ -40,14 +42,27 @@ func (a *api) DescribeProject(
 	req *desc.DescribeProjectRequest,
 ) (*desc.DescribeProjectResponse, error) {
 
+	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
+	project, err := a.projectStorage.DescribeProject(ctx, req.ProjectId)
+	if err != nil {
+		log.Error().Msgf("projectStorage.DescribeProject() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, errProjectNotFound)
+	}
 
-	err := status.Error(codes.NotFound, errProjectNotFound)
-	return nil, err
+	response := &desc.DescribeProjectResponse{
+		Project: &desc.Project{
+			Id:       project.Id,
+			CourseId: project.CourseId,
+			Name:     project.Name,
+		},
+	}
+
+	return response, nil
 }
 
 func (a *api) CreateProject(
@@ -78,6 +93,6 @@ func (a *api) RemoveProject(
 	return nil, err
 }
 
-func NewOcpProjectApi() desc.OcpProjectApiServer {
-	return &api{}
+func NewOcpProjectApi(projectStorage storage.ProjectStorage) desc.OcpProjectApiServer {
+	return &api{projectStorage: projectStorage}
 }

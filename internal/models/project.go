@@ -3,9 +3,9 @@ package models
 import "fmt"
 
 type Project struct {
-	Id       uint64
-	CourseId uint64
-	Name     string
+	Id       uint64 `db:"id"`
+	CourseId uint64 `db:"course_id"`
+	Name     string `db:"name"`
 }
 
 func (p Project) String() string {

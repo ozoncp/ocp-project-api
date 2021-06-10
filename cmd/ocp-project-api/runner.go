@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/ozoncp/ocp-project-api/internal/api"
+	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -22,8 +25,15 @@ func runGrpcAndGateway() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	db, err := sqlx.Connect("pgx", "user=lobanov dbname=ocp sslmode=disable")
+	if err != nil {
+		return err
+	}
+
+	projectStorage := storage.NewProjectStorage(db)
+
 	grpcServer := grpc.NewServer()
-	desc.RegisterOcpProjectApiServer(grpcServer, api.NewOcpProjectApi())
+	desc.RegisterOcpProjectApiServer(grpcServer, api.NewOcpProjectApi(projectStorage))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Msgf("Grpc server error: %v", err)

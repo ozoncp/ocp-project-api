@@ -38,7 +38,7 @@ func NewOcpProjectApiClient(cc grpc.ClientConnInterface) OcpProjectApiClient {
 
 func (c *ocpProjectApiClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
 	out := new(ListProjectsResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/ListProjects", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/ListProjects", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *ocpProjectApiClient) ListProjects(ctx context.Context, in *ListProjects
 
 func (c *ocpProjectApiClient) DescribeProject(ctx context.Context, in *DescribeProjectRequest, opts ...grpc.CallOption) (*DescribeProjectResponse, error) {
 	out := new(DescribeProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/DescribeProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/DescribeProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (c *ocpProjectApiClient) DescribeProject(ctx context.Context, in *DescribeP
 
 func (c *ocpProjectApiClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
 	out := new(CreateProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/CreateProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/CreateProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *ocpProjectApiClient) CreateProject(ctx context.Context, in *CreateProje
 
 func (c *ocpProjectApiClient) RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error) {
 	out := new(RemoveProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/RemoveProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/RemoveProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func _OcpProjectApi_ListProjects_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/ListProjects",
+		FullMethod: "/ocp.project.api.OcpProjectApi/ListProjects",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).ListProjects(ctx, req.(*ListProjectsRequest))
@@ -144,7 +144,7 @@ func _OcpProjectApi_DescribeProject_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/DescribeProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/DescribeProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).DescribeProject(ctx, req.(*DescribeProjectRequest))
@@ -162,7 +162,7 @@ func _OcpProjectApi_CreateProject_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/CreateProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/CreateProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).CreateProject(ctx, req.(*CreateProjectRequest))
@@ -180,7 +180,7 @@ func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/RemoveProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/RemoveProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).RemoveProject(ctx, req.(*RemoveProjectRequest))
@@ -192,7 +192,7 @@ func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocp.task.api.OcpProjectApi",
+	ServiceName: "ocp.project.api.OcpProjectApi",
 	HandlerType: (*OcpProjectApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

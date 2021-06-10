@@ -1,6 +1,7 @@
 package flusher
 
 import (
+	"context"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
@@ -8,8 +9,8 @@ import (
 )
 
 type Flusher interface {
-	FlushRepos(repos []models.Repo) []models.Repo
-	FlushProjects(projects []models.Project) []models.Project
+	FlushRepos(ctx context.Context, repos []models.Repo) []models.Repo
+	FlushProjects(ctx context.Context, projects []models.Project) []models.Project
 }
 
 type flusher struct {
@@ -32,7 +33,7 @@ func NewFlusher(
 }
 
 // FlushRepos flush slice repos in storage
-func (f *flusher) FlushRepos(repos []models.Repo) []models.Repo {
+func (f *flusher) FlushRepos(ctx context.Context, repos []models.Repo) []models.Repo {
 	chunks, err := utils.ReposSplitToBulks(repos, f.chunkSize)
 	if err != nil {
 		log.Printf("Flushing warning: %v\n", err)
@@ -49,7 +50,7 @@ func (f *flusher) FlushRepos(repos []models.Repo) []models.Repo {
 }
 
 // FlushProjects flush slice projects in storage
-func (f *flusher) FlushProjects(projects []models.Project) []models.Project {
+func (f *flusher) FlushProjects(ctx context.Context, projects []models.Project) []models.Project {
 	chunks, err := utils.ProjectsSplitToBulks(projects, f.chunkSize)
 	if err != nil {
 		log.Printf("Flushing warning: %v\n", err)
@@ -57,7 +58,7 @@ func (f *flusher) FlushProjects(projects []models.Project) []models.Project {
 	}
 
 	for i := 0; i < len(chunks); i++ {
-		if err := f.projectStorage.AddProjects(chunks[i]); err != nil {
+		if err := f.projectStorage.AddProjects(ctx, chunks[i]); err != nil {
 			return projects[i*f.chunkSize:]
 		}
 	}

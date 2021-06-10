@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -116,59 +117,59 @@ func (m *MockProjectStorage) EXPECT() *MockProjectStorageMockRecorder {
 }
 
 // AddProjects mocks base method.
-func (m *MockProjectStorage) AddProjects(arg0 []models.Project) error {
+func (m *MockProjectStorage) AddProjects(arg0 context.Context, arg1 []models.Project) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddProjects", arg0)
+	ret := m.ctrl.Call(m, "AddProjects", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddProjects indicates an expected call of AddProjects.
-func (mr *MockProjectStorageMockRecorder) AddProjects(arg0 interface{}) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) AddProjects(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProjects", reflect.TypeOf((*MockProjectStorage)(nil).AddProjects), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProjects", reflect.TypeOf((*MockProjectStorage)(nil).AddProjects), arg0, arg1)
 }
 
 // DescribeProject mocks base method.
-func (m *MockProjectStorage) DescribeProject(arg0 uint64) (*models.Project, error) {
+func (m *MockProjectStorage) DescribeProject(arg0 context.Context, arg1 uint64) (*models.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DescribeProject", arg0)
+	ret := m.ctrl.Call(m, "DescribeProject", arg0, arg1)
 	ret0, _ := ret[0].(*models.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DescribeProject indicates an expected call of DescribeProject.
-func (mr *MockProjectStorageMockRecorder) DescribeProject(arg0 interface{}) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) DescribeProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeProject", reflect.TypeOf((*MockProjectStorage)(nil).DescribeProject), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeProject", reflect.TypeOf((*MockProjectStorage)(nil).DescribeProject), arg0, arg1)
 }
 
 // ListProjects mocks base method.
-func (m *MockProjectStorage) ListProjects(arg0, arg1 uint64) ([]models.Project, error) {
+func (m *MockProjectStorage) ListProjects(arg0 context.Context, arg1, arg2 uint64) ([]models.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProjects", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListProjects", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]models.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListProjects indicates an expected call of ListProjects.
-func (mr *MockProjectStorageMockRecorder) ListProjects(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) ListProjects(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), arg0, arg1, arg2)
 }
 
 // RemoveProject mocks base method.
-func (m *MockProjectStorage) RemoveProject(arg0 uint64) error {
+func (m *MockProjectStorage) RemoveProject(arg0 context.Context, arg1 uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveProject", arg0)
+	ret := m.ctrl.Call(m, "RemoveProject", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveProject indicates an expected call of RemoveProject.
-func (mr *MockProjectStorageMockRecorder) RemoveProject(arg0 interface{}) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) RemoveProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveProject", reflect.TypeOf((*MockProjectStorage)(nil).RemoveProject), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveProject", reflect.TypeOf((*MockProjectStorage)(nil).RemoveProject), arg0, arg1)
 }

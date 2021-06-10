@@ -59,13 +59,13 @@ func (s *saver) flushingLoop(ctx context.Context) {
 	alarms := s.alarm.Alarms()
 
 	flushAll := func() {
-		restProjects := s.flusher.FlushProjects(projects)
+		restProjects := s.flusher.FlushProjects(ctx, projects)
 		if restProjects != nil {
 			projects = restProjects
 		} else {
 			projects = projects[:0]
 		}
-		restRepos := s.flusher.FlushRepos(repos)
+		restRepos := s.flusher.FlushRepos(ctx, repos)
 		if restRepos != nil {
 			repos = restRepos
 		} else {
