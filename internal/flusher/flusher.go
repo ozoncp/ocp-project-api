@@ -58,7 +58,7 @@ func (f *flusher) FlushProjects(ctx context.Context, projects []models.Project) 
 	}
 
 	for i := 0; i < len(chunks); i++ {
-		if err := f.projectStorage.AddProjects(ctx, chunks[i]); err != nil {
+		if _, err := f.projectStorage.AddProjects(ctx, chunks[i]); err != nil {
 			return projects[i*f.chunkSize:]
 		}
 	}

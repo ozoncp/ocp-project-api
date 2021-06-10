@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
 
@@ -9,11 +10,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-const (
-	errProjectCreate = "creating project fails"
-	errProjectRemove = "removing project fails"
 )
 
 type api struct {
@@ -93,8 +89,24 @@ func (a *api) CreateProject(
 
 	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
 
-	err := status.Error(codes.NotFound, errProjectCreate)
-	return nil, err
+	projects := []models.Project{
+		{
+			CourseId: req.CourseId,
+			Name:     req.Name,
+		},
+	}
+
+	id, err := a.projectStorage.AddProjects(ctx, projects)
+	if err != nil {
+		log.Error().Msgf("projectStorage.CreateProject() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	response := &desc.CreateProjectResponse{
+		ProjectId: id,
+	}
+
+	return response, nil
 }
 
 func (a *api) RemoveProject(
@@ -107,8 +119,17 @@ func (a *api) RemoveProject(
 
 	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
 
-	err := status.Error(codes.NotFound, errProjectRemove)
-	return nil, err
+	err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
+	if err != nil {
+		log.Error().Msgf("projectStorage.RemoveProject() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	response := &desc.RemoveProjectResponse{
+		Found: false,
+	}
+
+	return response, nil
 }
 
 func NewOcpProjectApi(projectStorage storage.ProjectStorage) desc.OcpProjectApiServer {
