@@ -12,10 +12,8 @@ import (
 )
 
 const (
-	errProjectListEmpty = "not found any projects"
-	errProjectNotFound  = "project not found"
-	errProjectCreate    = "creating project fails"
-	errProjectRemove    = "removing project fails"
+	errProjectCreate = "creating project fails"
+	errProjectRemove = "removing project fails"
 )
 
 type api struct {
@@ -33,8 +31,28 @@ func (a *api) ListProjects(
 
 	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
-	err := status.Error(codes.NotFound, errProjectListEmpty)
-	return nil, err
+	projects, err := a.projectStorage.ListProjects(ctx, req.Limit, req.Offset)
+	if err != nil {
+		log.Error().Msgf("projectStorage.ListProjects() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	respProjects := make([]*desc.Project, 0, len(projects))
+	for _, proj := range projects {
+		respProj := &desc.Project{
+			Id:       proj.Id,
+			CourseId: proj.CourseId,
+			Name:     proj.Name,
+		}
+
+		respProjects = append(respProjects, respProj)
+	}
+
+	response := &desc.ListProjectsResponse{
+		Projects: respProjects,
+	}
+
+	return response, nil
 }
 
 func (a *api) DescribeProject(
@@ -51,7 +69,7 @@ func (a *api) DescribeProject(
 	project, err := a.projectStorage.DescribeProject(ctx, req.ProjectId)
 	if err != nil {
 		log.Error().Msgf("projectStorage.DescribeProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, errProjectNotFound)
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	response := &desc.DescribeProjectResponse{

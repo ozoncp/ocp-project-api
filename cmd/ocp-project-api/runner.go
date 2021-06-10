@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
 )
@@ -33,6 +34,7 @@ func runGrpcAndGateway() error {
 	projectStorage := storage.NewProjectStorage(db)
 
 	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
 	desc.RegisterOcpProjectApiServer(grpcServer, api.NewOcpProjectApi(projectStorage))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {

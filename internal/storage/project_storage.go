@@ -49,5 +49,26 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 }
 
 func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error) {
-	return nil, nil
+	query := squirrel.Select("id", "course_id", "name").
+		From(tableName).
+		RunWith(ps.db).
+		Limit(limit).
+		Offset(offset).
+		PlaceholderFormat(squirrel.Dollar)
+
+	rows, err := query.QueryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	multiProjects := make([]models.Project, 0)
+
+	for rows.Next() {
+		var project models.Project
+		if err = rows.Scan(&project.Id, &project.CourseId, &project.Name); err != nil {
+			return nil, err
+		}
+		multiProjects = append(multiProjects, project)
+	}
+	return multiProjects, nil
 }
