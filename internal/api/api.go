@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
@@ -89,20 +90,50 @@ func (a *api) CreateProject(
 
 	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
 
-	projects := []models.Project{
-		{
-			CourseId: req.CourseId,
-			Name:     req.Name,
-		},
+	project := models.Project{
+		CourseId: req.CourseId,
+		Name:     req.Name,
 	}
 
-	cnt, err := a.projectStorage.AddProjects(ctx, projects)
+	id, err := a.projectStorage.AddProject(ctx, project)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v", err)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	response := &desc.CreateProjectResponse{
+		ProjectId: id,
+	}
+
+	return response, nil
+}
+
+func (a *api) MultiCreateProject(
+	ctx context.Context,
+	req *desc.MultiCreateProjectRequest,
+) (*desc.MultiCreateProjectResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	log.Info().Msgf("Got MultiCreateProjectRequest: {project count: %d}", len(req.Projects))
+
+	projects := make([]models.Project, 0, len(req.Projects))
+	for _, reqProject := range req.Projects {
+		proj := models.Project{
+			CourseId: reqProject.CourseId,
+			Name:     reqProject.Name,
+		}
+		projects = append(projects, proj)
+	}
+
+	cnt, err := a.projectStorage.MultiAddProject(ctx, projects)
+	if err != nil {
+		log.Error().Msgf("projectStorage.CreateProject() returns error: %v, count of created: %d", err, cnt)
+		return nil, status.Error(codes.NotFound, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+	}
+
+	response := &desc.MultiCreateProjectResponse{
 		CountOfCreated: cnt,
 	}
 

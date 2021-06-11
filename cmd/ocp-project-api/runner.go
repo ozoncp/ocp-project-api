@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	grpcPort = ":8082"
-	httpPort = ":8080"
+	grpcPort  = ":8082"
+	httpPort  = ":8080"
+	chunkSize = 10
 )
 
 func runGrpcAndGateway() error {
@@ -31,7 +32,7 @@ func runGrpcAndGateway() error {
 		return err
 	}
 
-	projectStorage := storage.NewProjectStorage(db)
+	projectStorage := storage.NewProjectStorage(db, chunkSize)
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)

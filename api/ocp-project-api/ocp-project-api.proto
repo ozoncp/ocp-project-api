@@ -33,6 +33,13 @@ service OcpProjectApi {
     };
   }
 
+  // Create new projects
+  rpc MultiCreateProject(MultiCreateProjectRequest) returns (MultiCreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/projects"
+    };
+  }
+
   // Remove project by id
   rpc RemoveProject(RemoveProjectRequest) returns (RemoveProjectResponse) {
     option (google.api.http) = {
@@ -56,6 +63,14 @@ message CreateProjectRequest {
 }
 
 message CreateProjectResponse {
+  uint64 project_id = 1;
+}
+
+message MultiCreateProjectRequest {
+  repeated NewProject projects = 1;
+}
+
+message MultiCreateProjectResponse {
   int64 count_of_created = 1;
 }
 
@@ -80,4 +95,10 @@ message Project {
   uint64 id = 1;
   uint64 course_id = 2;
   string name = 3;
+}
+
+// Project description for multi creation
+message NewProject {
+  uint64 course_id = 1;
+  string name = 2;
 }

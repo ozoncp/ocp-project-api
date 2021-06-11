@@ -2,9 +2,11 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/ozoncp/ocp-project-api/internal/models"
+	"github.com/ozoncp/ocp-project-api/internal/utils"
 )
 
 const (
@@ -12,38 +14,73 @@ const (
 )
 
 type ProjectStorage interface {
-	AddProjects(ctx context.Context, projects []models.Project) (int64, error)
+	AddProject(ctx context.Context, project models.Project) (uint64, error)
+	MultiAddProject(ctx context.Context, projects []models.Project) (int64, error)
 	RemoveProject(ctx context.Context, projectId uint64) (bool, error)
 	DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error)
 	ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error)
 }
 
-func NewProjectStorage(db *sqlx.DB) ProjectStorage {
-	return &projectStorage{db: db}
+func NewProjectStorage(db *sqlx.DB, chunkSize int) ProjectStorage {
+	return &projectStorage{db: db, chunkSize: chunkSize}
 }
 
 type projectStorage struct {
-	db *sqlx.DB
+	db        *sqlx.DB
+	chunkSize int
 }
 
-func (ps *projectStorage) AddProjects(ctx context.Context, projects []models.Project) (int64, error) {
+func (ps *projectStorage) AddProject(ctx context.Context, project models.Project) (uint64, error) {
 	query := squirrel.Insert(tableName).
 		Columns("course_id", "name").
+		Values(project.CourseId, project.Name).
+		Suffix("RETURNING \"id\"").
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
-	for _, proj := range projects {
-		query = query.Values(proj.CourseId, proj.Name)
-	}
-
-	result, err := query.ExecContext(ctx)
+	err := query.QueryRowContext(ctx).Scan(&project.Id)
 	if err != nil {
 		return 0, err
 	}
 
-	var cnt int64
-	cnt, err = result.RowsAffected()
-	return cnt, err
+	return project.Id, nil
+}
+
+func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models.Project) (int64, error) {
+	projectBulks, err := utils.ProjectsSplitToBulks(projects, ps.chunkSize)
+	if err != nil {
+		return 0, err
+	}
+
+	var rowsAffected int64
+
+	for _, bulk := range projectBulks {
+		query := squirrel.Insert(tableName).
+			Columns("course_id", "name").
+			RunWith(ps.db).
+			PlaceholderFormat(squirrel.Dollar)
+
+		for _, proj := range bulk {
+			query = query.Values(proj.CourseId, proj.Name)
+		}
+
+		var result sql.Result
+		result, err = query.ExecContext(ctx)
+		if err != nil {
+			return rowsAffected, err
+		}
+
+		var cnt int64
+		cnt, err = result.RowsAffected()
+		if err != nil {
+			// so RowsAffected() not supported
+			cnt = 0
+		}
+		rowsAffected = rowsAffected + cnt
+
+	}
+	// we might get error from RowsAffected()
+	return rowsAffected, err
 }
 
 func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (bool, error) {

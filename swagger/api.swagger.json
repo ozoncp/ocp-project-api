@@ -13,13 +13,13 @@
   "paths": {
     "/projects": {
       "post": {
-        "summary": "Create new project",
-        "operationId": "OcpProjectApi_CreateProject",
+        "summary": "Create new projects",
+        "operationId": "OcpProjectApi_MultiCreateProject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiCreateProjectResponse"
+              "$ref": "#/definitions/apiMultiCreateProjectResponse"
             }
           },
           "default": {
@@ -140,9 +140,9 @@
     "apiCreateProjectResponse": {
       "type": "object",
       "properties": {
-        "count_of_created": {
+        "project_id": {
           "type": "string",
-          "format": "int64"
+          "format": "uint64"
         }
       }
     },
@@ -164,6 +164,28 @@
           }
         }
       }
+    },
+    "apiMultiCreateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "count_of_created": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "apiNewProject": {
+      "type": "object",
+      "properties": {
+        "course_id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "title": "Project description for multi creation"
     },
     "apiProject": {
       "type": "object",

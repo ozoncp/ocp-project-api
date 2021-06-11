@@ -116,19 +116,19 @@ func (m *MockProjectStorage) EXPECT() *MockProjectStorageMockRecorder {
 	return m.recorder
 }
 
-// AddProjects mocks base method.
-func (m *MockProjectStorage) AddProjects(arg0 context.Context, arg1 []models.Project) (int64, error) {
+// AddProject mocks base method.
+func (m *MockProjectStorage) AddProject(arg0 context.Context, arg1 models.Project) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddProjects", arg0, arg1)
-	ret0, _ := ret[0].(int64)
+	ret := m.ctrl.Call(m, "AddProject", arg0, arg1)
+	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddProjects indicates an expected call of AddProjects.
-func (mr *MockProjectStorageMockRecorder) AddProjects(arg0, arg1 interface{}) *gomock.Call {
+// AddProject indicates an expected call of AddProject.
+func (mr *MockProjectStorageMockRecorder) AddProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProjects", reflect.TypeOf((*MockProjectStorage)(nil).AddProjects), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProject", reflect.TypeOf((*MockProjectStorage)(nil).AddProject), arg0, arg1)
 }
 
 // DescribeProject mocks base method.
@@ -159,6 +159,21 @@ func (m *MockProjectStorage) ListProjects(arg0 context.Context, arg1, arg2 uint6
 func (mr *MockProjectStorageMockRecorder) ListProjects(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), arg0, arg1, arg2)
+}
+
+// MultiAddProject mocks base method.
+func (m *MockProjectStorage) MultiAddProject(arg0 context.Context, arg1 []models.Project) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiAddProject", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MultiAddProject indicates an expected call of MultiAddProject.
+func (mr *MockProjectStorageMockRecorder) MultiAddProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiAddProject", reflect.TypeOf((*MockProjectStorage)(nil).MultiAddProject), arg0, arg1)
 }
 
 // RemoveProject mocks base method.

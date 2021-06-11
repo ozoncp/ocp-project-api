@@ -24,6 +24,8 @@ type OcpProjectApiClient interface {
 	DescribeProject(ctx context.Context, in *DescribeProjectRequest, opts ...grpc.CallOption) (*DescribeProjectResponse, error)
 	// Create new project
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	// Create new projects
+	MultiCreateProject(ctx context.Context, in *MultiCreateProjectRequest, opts ...grpc.CallOption) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error)
 }
@@ -63,6 +65,15 @@ func (c *ocpProjectApiClient) CreateProject(ctx context.Context, in *CreateProje
 	return out, nil
 }
 
+func (c *ocpProjectApiClient) MultiCreateProject(ctx context.Context, in *MultiCreateProjectRequest, opts ...grpc.CallOption) (*MultiCreateProjectResponse, error) {
+	out := new(MultiCreateProjectResponse)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/MultiCreateProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ocpProjectApiClient) RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error) {
 	out := new(RemoveProjectResponse)
 	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/RemoveProject", in, out, opts...)
@@ -82,6 +93,8 @@ type OcpProjectApiServer interface {
 	DescribeProject(context.Context, *DescribeProjectRequest) (*DescribeProjectResponse, error)
 	// Create new project
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	// Create new projects
+	MultiCreateProject(context.Context, *MultiCreateProjectRequest) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error)
 	mustEmbedUnimplementedOcpProjectApiServer()
@@ -99,6 +112,9 @@ func (UnimplementedOcpProjectApiServer) DescribeProject(context.Context, *Descri
 }
 func (UnimplementedOcpProjectApiServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
+}
+func (UnimplementedOcpProjectApiServer) MultiCreateProject(context.Context, *MultiCreateProjectRequest) (*MultiCreateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateProject not implemented")
 }
 func (UnimplementedOcpProjectApiServer) RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveProject not implemented")
@@ -170,6 +186,24 @@ func _OcpProjectApi_CreateProject_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OcpProjectApi_MultiCreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpProjectApiServer).MultiCreateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.project.api.OcpProjectApi/MultiCreateProject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpProjectApiServer).MultiCreateProject(ctx, req.(*MultiCreateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveProjectRequest)
 	if err := dec(in); err != nil {
@@ -206,6 +240,10 @@ var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateProject",
 			Handler:    _OcpProjectApi_CreateProject_Handler,
+		},
+		{
+			MethodName: "MultiCreateProject",
+			Handler:    _OcpProjectApi_MultiCreateProject_Handler,
 		},
 		{
 			MethodName: "RemoveProject",
