@@ -106,11 +106,18 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
-	var project models.Project
-	if err := query.QueryRowContext(ctx).Scan(&project.Id, &project.CourseId, &project.Name); err != nil {
+	// just for trying this method
+	sqlString, args, err := query.ToSql()
+	if err != nil {
 		return nil, err
 	}
-	return &project, nil
+	var res []*models.Project
+	err = ps.db.SelectContext(ctx, &res, sqlString, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return res[0], nil
 }
 
 func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error) {
