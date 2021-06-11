@@ -270,7 +270,7 @@ func (m *CreateProjectResponse) Validate() error {
 		return nil
 	}
 
-	// no validation rules for ProjectId
+	// no validation rules for CountOfCreated
 
 	return nil
 }

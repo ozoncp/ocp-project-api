@@ -12,8 +12,8 @@ const (
 )
 
 type ProjectStorage interface {
-	AddProjects(ctx context.Context, projects []models.Project) (uint64, error)
-	RemoveProject(ctx context.Context, projectId uint64) error
+	AddProjects(ctx context.Context, projects []models.Project) (int64, error)
+	RemoveProject(ctx context.Context, projectId uint64) (bool, error)
 	DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error)
 	ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error)
 }
@@ -26,7 +26,7 @@ type projectStorage struct {
 	db *sqlx.DB
 }
 
-func (ps *projectStorage) AddProjects(ctx context.Context, projects []models.Project) (uint64, error) {
+func (ps *projectStorage) AddProjects(ctx context.Context, projects []models.Project) (int64, error) {
 	query := squirrel.Insert(tableName).
 		Columns("course_id", "name").
 		RunWith(ps.db).
@@ -41,19 +41,25 @@ func (ps *projectStorage) AddProjects(ctx context.Context, projects []models.Pro
 		return 0, err
 	}
 
-	var id int64
-	id, err = result.LastInsertId()
-	return uint64(id), err
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt, err
 }
 
-func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) error {
+func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (bool, error) {
 	query := squirrel.Delete(tableName).
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
-	_, err := query.ExecContext(ctx)
-	return err
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt != 0, err
 }
 
 func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error) {

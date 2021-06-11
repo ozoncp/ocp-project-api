@@ -117,10 +117,10 @@ func (m *MockProjectStorage) EXPECT() *MockProjectStorageMockRecorder {
 }
 
 // AddProjects mocks base method.
-func (m *MockProjectStorage) AddProjects(arg0 context.Context, arg1 []models.Project) (uint64, error) {
+func (m *MockProjectStorage) AddProjects(arg0 context.Context, arg1 []models.Project) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddProjects", arg0, arg1)
-	ret0, _ := ret[0].(uint64)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -162,11 +162,12 @@ func (mr *MockProjectStorageMockRecorder) ListProjects(arg0, arg1, arg2 interfac
 }
 
 // RemoveProject mocks base method.
-func (m *MockProjectStorage) RemoveProject(arg0 context.Context, arg1 uint64) error {
+func (m *MockProjectStorage) RemoveProject(arg0 context.Context, arg1 uint64) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveProject", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RemoveProject indicates an expected call of RemoveProject.

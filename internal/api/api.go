@@ -96,14 +96,14 @@ func (a *api) CreateProject(
 		},
 	}
 
-	id, err := a.projectStorage.AddProjects(ctx, projects)
+	cnt, err := a.projectStorage.AddProjects(ctx, projects)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v", err)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	response := &desc.CreateProjectResponse{
-		ProjectId: id,
+		CountOfCreated: cnt,
 	}
 
 	return response, nil
@@ -119,14 +119,14 @@ func (a *api) RemoveProject(
 
 	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
 
-	err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
+	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
 	if err != nil {
 		log.Error().Msgf("projectStorage.RemoveProject() returns error: %v", err)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	response := &desc.RemoveProjectResponse{
-		Found: false,
+		Found: removed,
 	}
 
 	return response, nil

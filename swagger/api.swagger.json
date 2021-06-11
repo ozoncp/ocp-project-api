@@ -140,9 +140,9 @@
     "apiCreateProjectResponse": {
       "type": "object",
       "properties": {
-        "project_id": {
+        "count_of_created": {
           "type": "string",
-          "format": "uint64"
+          "format": "int64"
         }
       }
     },

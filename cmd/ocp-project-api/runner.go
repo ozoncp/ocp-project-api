@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/ozoncp/ocp-project-api/internal/api"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
@@ -26,7 +26,7 @@ func runGrpcAndGateway() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	db, err := sqlx.Connect("pgx", "user=lobanov dbname=ocp sslmode=disable")
+	db, err := sqlx.Connect("postgres", "user=lobanov dbname=ocp sslmode=disable")
 	if err != nil {
 		return err
 	}
