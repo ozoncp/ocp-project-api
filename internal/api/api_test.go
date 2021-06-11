@@ -27,6 +27,9 @@ var _ = Describe("Api", func() {
 		createRequest  *desc.CreateProjectRequest
 		createResponse *desc.CreateProjectResponse
 
+		describeRequest  *desc.DescribeProjectRequest
+		describeResponse *desc.DescribeProjectResponse
+
 		err error
 
 		chunkSize int
@@ -99,9 +102,78 @@ var _ = Describe("Api", func() {
 			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
 
 			mock.ExpectQuery("INSERT INTO projects").
-				WithArgs(createRequest.CourseId, createRequest.Name).WillReturnError(errors.New("i am bad database"))
+				WithArgs(createRequest.CourseId, createRequest.Name).
+				WillReturnError(errors.New("i am bad database"))
 
 			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(createResponse).Should(BeNil())
+		})
+	})
+
+	Context("describe project simple", func() {
+		var (
+			projectId uint64 = 1
+			courseId  uint64 = 1
+			name      string = "1"
+		)
+
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			describeRequest = &desc.DescribeProjectRequest{ProjectId: 1}
+
+			rows := sqlmock.NewRows([]string{"id", "course_id", "name"}).
+				AddRow(projectId, courseId, name)
+			mock.ExpectQuery("SELECT (.+) FROM projects WHERE").
+				WithArgs(describeRequest.ProjectId).
+				WillReturnRows(rows)
+
+			describeResponse, err = grpcApi.DescribeProject(ctx, describeRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(describeResponse.Project.Id).Should(Equal(projectId))
+			Expect(describeResponse.Project.CourseId).Should(Equal(courseId))
+			Expect(describeResponse.Project.Name).Should(Equal(name))
+		})
+	})
+
+	Context("describe project: invalid argument", func() {
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			describeRequest = &desc.DescribeProjectRequest{ProjectId: 0}
+
+			describeResponse, err = grpcApi.DescribeProject(ctx, describeRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+		})
+	})
+
+	Context("describe project: sql query returns error", func() {
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			describeRequest = &desc.DescribeProjectRequest{ProjectId: 1}
+
+			mock.ExpectQuery("SELECT (.+) FROM projects WHERE").
+				WithArgs(describeRequest.ProjectId).
+				WillReturnError(errors.New("i am bad database"))
+
+			describeResponse, err = grpcApi.DescribeProject(ctx, describeRequest)
 		})
 
 		It("", func() {
