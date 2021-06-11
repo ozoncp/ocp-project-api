@@ -30,6 +30,9 @@ var _ = Describe("Api", func() {
 		describeRequest  *desc.DescribeProjectRequest
 		describeResponse *desc.DescribeProjectResponse
 
+		removeRequest  *desc.RemoveProjectRequest
+		removeResponse *desc.RemoveProjectResponse
+
 		err error
 
 		chunkSize int
@@ -179,6 +182,88 @@ var _ = Describe("Api", func() {
 		It("", func() {
 			Expect(err).ShouldNot(BeNil())
 			Expect(createResponse).Should(BeNil())
+		})
+	})
+
+	Context("remove project simple", func() {
+		var projectId uint64 = 1
+
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			removeRequest = &desc.RemoveProjectRequest{ProjectId: projectId}
+
+			mock.ExpectExec("DELETE FROM projects").
+				WithArgs(removeRequest.ProjectId).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(removeResponse.Found).Should(Equal(true))
+		})
+	})
+	Context("remove project: not found", func() {
+		var projectId uint64 = 1
+
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			removeRequest = &desc.RemoveProjectRequest{ProjectId: projectId}
+
+			mock.ExpectExec("DELETE FROM projects").
+				WithArgs(removeRequest.ProjectId).WillReturnResult(sqlmock.NewResult(0, 0))
+
+			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(removeResponse.Found).Should(Equal(false))
+		})
+	})
+
+	Context("remove project: invalid argument", func() {
+		var projectId uint64 = 0
+
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			removeRequest = &desc.RemoveProjectRequest{ProjectId: projectId}
+
+			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+		})
+	})
+
+	Context("remove project: sql query returns error", func() {
+		var projectId uint64 = 1
+
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			removeRequest = &desc.RemoveProjectRequest{ProjectId: projectId}
+
+			mock.ExpectExec("DELETE FROM projects").
+				WithArgs(removeRequest.ProjectId).WillReturnError(errors.New("i am bad database"))
+
+			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
 		})
 	})
 
