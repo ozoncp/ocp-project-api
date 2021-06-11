@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
@@ -43,7 +44,9 @@ var _ = Describe("Api", func() {
 	})
 
 	AfterEach(func() {
+		mock.ExpectClose()
 		err = db.Close()
+		Expect(err).Should(BeNil())
 	})
 	Context("create project simple", func() {
 		var projectId uint64 = 1
@@ -53,11 +56,14 @@ var _ = Describe("Api", func() {
 			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
 			grpcApi = api.NewOcpProjectApi(projectStorage)
 
+			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
+
 			rows := sqlmock.NewRows([]string{"id"}).
 				AddRow(projectId)
-			mock.ExpectQuery("INSERT INTO projects").WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(rows)
+			mock.ExpectQuery("INSERT INTO projects").
+				WithArgs(createRequest.CourseId, createRequest.Name).
+				WillReturnRows(rows)
 
-			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
 			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
 		})
 
@@ -66,4 +72,42 @@ var _ = Describe("Api", func() {
 			Expect(createResponse.ProjectId).Should(Equal(projectId))
 		})
 	})
+
+	Context("create project: invalid argument", func() {
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			createRequest = &desc.CreateProjectRequest{CourseId: 0, Name: "1"}
+
+			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(createResponse).Should(BeNil())
+		})
+	})
+
+	Context("create project: sql query returns error", func() {
+		BeforeEach(func() {
+			chunkSize = 1
+			projectStorage = storage.NewProjectStorage(sqlxDB, chunkSize)
+			grpcApi = api.NewOcpProjectApi(projectStorage)
+
+			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
+
+			mock.ExpectQuery("INSERT INTO projects").
+				WithArgs(createRequest.CourseId, createRequest.Name).WillReturnError(errors.New("i am bad database"))
+
+			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(createResponse).Should(BeNil())
+		})
+	})
+
 })
