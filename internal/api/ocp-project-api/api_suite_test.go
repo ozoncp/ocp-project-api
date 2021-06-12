@@ -1,4 +1,4 @@
-package api_test
+package ocp_project_api_test
 
 import (
 	"testing"

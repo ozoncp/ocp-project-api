@@ -13,7 +13,7 @@ PHONY: .generate
 				--validate_out lang=go:pkg/ocp-project-api \
 				--swagger_out=allow_merge=true,merge_file_name=api:swagger \
 				api/ocp-project-api/ocp-project-api.proto
-		mv pkg/ocp-project-api/gihtub.com/ozoncp/ocp-project-api/pkg/ocp-project-api/* pkg/ocp-project-api/
+		mv pkg/ocp-project-api/github.com/ozoncp/ocp-project-api/pkg/ocp-project-api/* pkg/ocp-project-api/
 		rm -rf pkg/ocp-project-api/gihtub.com
 		mkdir -p cmd/ocp-project-api
 

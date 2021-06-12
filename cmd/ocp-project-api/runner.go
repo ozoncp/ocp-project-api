@@ -5,7 +5,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/ozoncp/ocp-project-api/internal/api"
+	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-project-api"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
 	"github.com/rs/zerolog/log"
@@ -36,7 +36,7 @@ func runGrpcAndGateway() error {
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	desc.RegisterOcpProjectApiServer(grpcServer, api.NewOcpProjectApi(projectStorage))
+	desc.RegisterOcpProjectApiServer(grpcServer, projectApi.NewOcpProjectApi(projectStorage))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Msgf("Grpc server error: %v", err)

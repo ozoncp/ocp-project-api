@@ -1,4 +1,4 @@
-package api
+package ocp_project_api
 
 import (
 	"context"
@@ -116,7 +116,7 @@ func (a *api) MultiCreateProject(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Info().Msgf("Got MultiCreateProjectRequest: {project count: %d}", len(req.Projects))
+	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
 
 	projects := make([]models.Project, 0, len(req.Projects))
 	for _, reqProject := range req.Projects {

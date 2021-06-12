@@ -6,7 +6,7 @@ import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
 
 package ocp.project.api;
 
-option go_package = "gihtub.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
+option go_package = "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
 
 // Описание задачи
 

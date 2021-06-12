@@ -1,4 +1,4 @@
-package api_test
+package ocp_project_api_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/ozoncp/ocp-project-api/internal/api"
+	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-project-api"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
@@ -57,7 +57,7 @@ var _ = Describe("Api", func() {
 		sqlxDB = sqlx.NewDb(db, "sqlmock")
 
 		projectStorage = storage.NewProjectStorage(sqlxDB, 2)
-		grpcApi = api.NewOcpProjectApi(projectStorage)
+		grpcApi = projectApi.NewOcpProjectApi(projectStorage)
 	})
 
 	JustBeforeEach(func() {
@@ -364,7 +364,7 @@ var _ = Describe("Api", func() {
 	Context("multi create project: split to bulks", func() {
 		BeforeEach(func() {
 			projectStorage = storage.NewProjectStorage(sqlxDB, 1)
-			grpcApi = api.NewOcpProjectApi(projectStorage)
+			grpcApi = projectApi.NewOcpProjectApi(projectStorage)
 
 			multiCreateRequest = &desc.MultiCreateProjectRequest{
 				Projects: []*desc.NewProject{
