@@ -853,7 +853,12 @@ func (m *NewProject) Validate() error {
 		return nil
 	}
 
-	// no validation rules for CourseId
+	if m.GetCourseId() <= 0 {
+		return NewProjectValidationError{
+			field:  "CourseId",
+			reason: "value must be greater than 0",
+		}
+	}
 
 	// no validation rules for Name
 

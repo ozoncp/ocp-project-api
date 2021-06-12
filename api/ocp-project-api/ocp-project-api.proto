@@ -99,6 +99,6 @@ message Project {
 
 // Project description for multi creation
 message NewProject {
-  uint64 course_id = 1;
+  uint64 course_id = 1 [(validate.rules).uint64.gt = 0];
   string name = 2;
 }
