@@ -41,7 +41,7 @@ func (f *flusher) FlushRepos(ctx context.Context, repos []models.Repo) []models.
 	}
 
 	for i := 0; i < len(chunks); i++ {
-		if err := f.repoStorage.AddRepos(chunks[i]); err != nil {
+		if _, err = f.repoStorage.MultiAddRepo(ctx, chunks[i]); err != nil {
 			return repos[i*f.chunkSize:]
 		}
 	}
@@ -58,7 +58,7 @@ func (f *flusher) FlushProjects(ctx context.Context, projects []models.Project) 
 	}
 
 	for i := 0; i < len(chunks); i++ {
-		if _, err := f.projectStorage.MultiAddProject(ctx, chunks[i]); err != nil {
+		if _, err = f.projectStorage.MultiAddProject(ctx, chunks[i]); err != nil {
 			return projects[i*f.chunkSize:]
 		}
 	}

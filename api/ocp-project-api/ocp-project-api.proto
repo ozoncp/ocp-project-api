@@ -8,8 +8,6 @@ package ocp.project.api;
 
 option go_package = "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
 
-// Описание задачи
-
 service OcpProjectApi {
 
   // Return projects list

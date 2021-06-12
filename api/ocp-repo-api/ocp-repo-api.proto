@@ -1,0 +1,105 @@
+
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package ocp.repo.api;
+
+option go_package = "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api;ocp_repo_api";
+
+service OcpRepoApi {
+
+  // Return repos list
+  rpc ListRepos(ListReposRequest) returns (ListReposResponse) {
+    option (google.api.http) = {
+      get: "/repos/list/{limit}"
+    };
+  }
+
+  // Return repo description by it id
+  rpc DescribeRepo(DescribeRepoRequest) returns (DescribeRepoResponse) {
+    option (google.api.http) = {
+      get: "/repos/{repo_id}"
+    };
+  }
+
+  // Create new repo
+  rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse) {
+    option (google.api.http) = {
+      post: "/repos"
+    };
+  }
+
+  // Create new repos
+  rpc MultiCreateRepo(MultiCreateRepoRequest) returns (MultiCreateRepoResponse) {
+    option (google.api.http) = {
+      post: "/repos"
+    };
+  }
+
+  // Remove repo by id
+  rpc RemoveRepo(RemoveRepoRequest) returns (RemoveRepoResponse) {
+    option (google.api.http) = {
+      delete: "/repos/{repo_id}"
+    };
+  }
+}
+
+message ListReposRequest {
+  uint64 limit = 1;
+  uint64 offset = 2;
+}
+
+message ListReposResponse {
+  repeated Repo repos = 1;
+}
+
+message CreateRepoRequest {
+  uint64 project_id = 1 [(validate.rules).uint64.gt = 0];
+  uint64 user_id = 2 [(validate.rules).uint64.gt = 0];
+  string link = 3;
+}
+
+message CreateRepoResponse {
+  uint64 repo_id = 1;
+}
+
+message MultiCreateRepoRequest {
+  repeated NewRepo repos = 1;
+}
+
+message MultiCreateRepoResponse {
+  int64 count_of_created = 1;
+}
+
+message RemoveRepoRequest {
+  uint64 repo_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message RemoveRepoResponse {
+  bool found = 1;
+}
+
+message DescribeRepoRequest {
+  uint64 repo_id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeRepoResponse {
+  Repo repo = 1;
+}
+
+// Repo description
+message Repo {
+  uint64 id = 1;
+  uint64 project_id = 2;
+  uint64 user_id = 3;
+  string link = 4;
+}
+
+// Repo description for multi creation
+message NewRepo {
+  uint64 project_id = 1 [(validate.rules).uint64.gt = 0];
+  uint64 user_id = 3 [(validate.rules).uint64.gt = 0];
+  string link = 4;
+}

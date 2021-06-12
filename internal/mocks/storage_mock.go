@@ -35,62 +35,79 @@ func (m *MockRepoStorage) EXPECT() *MockRepoStorageMockRecorder {
 	return m.recorder
 }
 
-// AddRepos mocks base method.
-func (m *MockRepoStorage) AddRepos(arg0 []models.Repo) error {
+// AddRepo mocks base method.
+func (m *MockRepoStorage) AddRepo(arg0 context.Context, arg1 models.Repo) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddRepos", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "AddRepo", arg0, arg1)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddRepos indicates an expected call of AddRepos.
-func (mr *MockRepoStorageMockRecorder) AddRepos(arg0 interface{}) *gomock.Call {
+// AddRepo indicates an expected call of AddRepo.
+func (mr *MockRepoStorageMockRecorder) AddRepo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepos", reflect.TypeOf((*MockRepoStorage)(nil).AddRepos), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepo", reflect.TypeOf((*MockRepoStorage)(nil).AddRepo), arg0, arg1)
 }
 
 // DescribeRepo mocks base method.
-func (m *MockRepoStorage) DescribeRepo(arg0 uint64) (*models.Repo, error) {
+func (m *MockRepoStorage) DescribeRepo(arg0 context.Context, arg1 uint64) (*models.Repo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DescribeRepo", arg0)
+	ret := m.ctrl.Call(m, "DescribeRepo", arg0, arg1)
 	ret0, _ := ret[0].(*models.Repo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DescribeRepo indicates an expected call of DescribeRepo.
-func (mr *MockRepoStorageMockRecorder) DescribeRepo(arg0 interface{}) *gomock.Call {
+func (mr *MockRepoStorageMockRecorder) DescribeRepo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeRepo", reflect.TypeOf((*MockRepoStorage)(nil).DescribeRepo), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeRepo", reflect.TypeOf((*MockRepoStorage)(nil).DescribeRepo), arg0, arg1)
 }
 
 // ListRepos mocks base method.
-func (m *MockRepoStorage) ListRepos(arg0, arg1 uint64) ([]models.Repo, error) {
+func (m *MockRepoStorage) ListRepos(arg0 context.Context, arg1, arg2 uint64) ([]models.Repo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRepos", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListRepos", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]models.Repo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRepos indicates an expected call of ListRepos.
-func (mr *MockRepoStorageMockRecorder) ListRepos(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepoStorageMockRecorder) ListRepos(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepos", reflect.TypeOf((*MockRepoStorage)(nil).ListRepos), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepos", reflect.TypeOf((*MockRepoStorage)(nil).ListRepos), arg0, arg1, arg2)
+}
+
+// MultiAddRepo mocks base method.
+func (m *MockRepoStorage) MultiAddRepo(arg0 context.Context, arg1 []models.Repo) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiAddRepo", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MultiAddRepo indicates an expected call of MultiAddRepo.
+func (mr *MockRepoStorageMockRecorder) MultiAddRepo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiAddRepo", reflect.TypeOf((*MockRepoStorage)(nil).MultiAddRepo), arg0, arg1)
 }
 
 // RemoveRepo mocks base method.
-func (m *MockRepoStorage) RemoveRepo(arg0 uint64) error {
+func (m *MockRepoStorage) RemoveRepo(arg0 context.Context, arg1 uint64) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveRepo", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "RemoveRepo", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RemoveRepo indicates an expected call of RemoveRepo.
-func (mr *MockRepoStorageMockRecorder) RemoveRepo(arg0 interface{}) *gomock.Call {
+func (mr *MockRepoStorageMockRecorder) RemoveRepo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRepo", reflect.TypeOf((*MockRepoStorage)(nil).RemoveRepo), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRepo", reflect.TypeOf((*MockRepoStorage)(nil).RemoveRepo), arg0, arg1)
 }
 
 // MockProjectStorage is a mock of ProjectStorage interface.

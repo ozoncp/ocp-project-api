@@ -49,7 +49,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Any()).Return(nil).Times(0)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Any()).Return(int64(0), nil).Times(0)
 		})
 
 		It("", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1)
 		})
 
 		It("", func() {
@@ -82,7 +82,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Len(len(repos))).Return(errors.New("some error")).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos))).Return(int64(0), errors.New("some error")).Times(1)
 		})
 
 		It("", func() {
@@ -103,9 +103,10 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockRepoStorage.EXPECT().AddRepos(
-					gomock.Len(len(repos)-chunkSize)).Return(errors.New("some error")).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(
+					ctx,
+					gomock.Len(len(repos)-chunkSize)).Return(int64(0), errors.New("some error")).Times(1),
 			)
 		})
 
@@ -129,8 +130,8 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(len(repos)-chunkSize)).Return(nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos)-chunkSize)).Return(int64(0), nil).Times(1),
 			)
 		})
 

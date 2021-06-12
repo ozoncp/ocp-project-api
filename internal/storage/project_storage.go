@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	tableName = "projects"
+	projectTableName = "projects"
 )
 
 type ProjectStorage interface {
@@ -31,7 +31,7 @@ type projectStorage struct {
 }
 
 func (ps *projectStorage) AddProject(ctx context.Context, project models.Project) (uint64, error) {
-	query := squirrel.Insert(tableName).
+	query := squirrel.Insert(projectTableName).
 		Columns("course_id", "name").
 		Values(project.CourseId, project.Name).
 		Suffix("RETURNING \"id\"").
@@ -55,7 +55,7 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 	var rowsAffected int64
 
 	for _, bulk := range projectBulks {
-		query := squirrel.Insert(tableName).
+		query := squirrel.Insert(projectTableName).
 			Columns("course_id", "name").
 			RunWith(ps.db).
 			PlaceholderFormat(squirrel.Dollar)
@@ -84,7 +84,7 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 }
 
 func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (bool, error) {
-	query := squirrel.Delete(tableName).
+	query := squirrel.Delete(projectTableName).
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
@@ -101,7 +101,7 @@ func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (
 
 func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error) {
 	query := squirrel.Select("id", "course_id", "name").
-		From(tableName).
+		From(projectTableName).
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
@@ -122,7 +122,7 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 
 func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error) {
 	query := squirrel.Select("id", "course_id", "name").
-		From(tableName).
+		From(projectTableName).
 		RunWith(ps.db).
 		Limit(limit).
 		Offset(offset).
