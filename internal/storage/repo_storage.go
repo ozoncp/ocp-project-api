@@ -19,6 +19,7 @@ type RepoStorage interface {
 	RemoveRepo(ctx context.Context, repoId uint64) (bool, error)
 	DescribeRepo(ctx context.Context, repoId uint64) (*models.Repo, error)
 	ListRepos(ctx context.Context, limit, offset uint64) ([]models.Repo, error)
+	UpdateRepo(ctx context.Context, repo models.Repo) (bool, error)
 }
 
 func NewRepoStorage(db *sqlx.DB, chunkSize int) RepoStorage {
@@ -143,4 +144,23 @@ func (ps *repoStorage) ListRepos(ctx context.Context, limit, offset uint64) ([]m
 		multiRepos = append(multiRepos, repo)
 	}
 	return multiRepos, nil
+}
+
+func (ps *repoStorage) UpdateRepo(ctx context.Context, repo models.Repo) (bool, error) {
+	query := squirrel.Update(repoTableName).
+		Set("project_id", repo.ProjectId).
+		Set("user_id", repo.UserId).
+		Set("link", repo.Link).
+		Where(squirrel.Eq{"id": repo.Id}).
+		RunWith(ps.db).
+		PlaceholderFormat(squirrel.Dollar)
+
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt != 0, err
 }

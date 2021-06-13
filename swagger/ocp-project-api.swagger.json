@@ -13,13 +13,13 @@
   "paths": {
     "/projects": {
       "post": {
-        "summary": "Create new projects",
-        "operationId": "OcpProjectApi_MultiCreateProject",
+        "summary": "Update project",
+        "operationId": "OcpProjectApi_UpdateProject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiMultiCreateProjectResponse"
+              "$ref": "#/definitions/apiUpdateProjectResponse"
             }
           },
           "default": {
@@ -205,6 +205,14 @@
       "title": "Project description"
     },
     "apiRemoveProjectResponse": {
+      "type": "object",
+      "properties": {
+        "found": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiUpdateProjectResponse": {
       "type": "object",
       "properties": {
         "found": {

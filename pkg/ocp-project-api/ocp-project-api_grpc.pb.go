@@ -28,6 +28,8 @@ type OcpProjectApiClient interface {
 	MultiCreateProject(ctx context.Context, in *MultiCreateProjectRequest, opts ...grpc.CallOption) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error)
+	// Update project
+	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error)
 }
 
 type ocpProjectApiClient struct {
@@ -83,6 +85,15 @@ func (c *ocpProjectApiClient) RemoveProject(ctx context.Context, in *RemoveProje
 	return out, nil
 }
 
+func (c *ocpProjectApiClient) UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error) {
+	out := new(UpdateProjectResponse)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/UpdateProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OcpProjectApiServer is the server API for OcpProjectApi service.
 // All implementations must embed UnimplementedOcpProjectApiServer
 // for forward compatibility
@@ -97,6 +108,8 @@ type OcpProjectApiServer interface {
 	MultiCreateProject(context.Context, *MultiCreateProjectRequest) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error)
+	// Update project
+	UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error)
 	mustEmbedUnimplementedOcpProjectApiServer()
 }
 
@@ -118,6 +131,9 @@ func (UnimplementedOcpProjectApiServer) MultiCreateProject(context.Context, *Mul
 }
 func (UnimplementedOcpProjectApiServer) RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveProject not implemented")
+}
+func (UnimplementedOcpProjectApiServer) UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProject not implemented")
 }
 func (UnimplementedOcpProjectApiServer) mustEmbedUnimplementedOcpProjectApiServer() {}
 
@@ -222,6 +238,24 @@ func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OcpProjectApi_UpdateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpProjectApiServer).UpdateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.project.api.OcpProjectApi/UpdateProject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpProjectApiServer).UpdateProject(ctx, req.(*UpdateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OcpProjectApi_ServiceDesc is the grpc.ServiceDesc for OcpProjectApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -248,6 +282,10 @@ var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveProject",
 			Handler:    _OcpProjectApi_RemoveProject_Handler,
+		},
+		{
+			MethodName: "UpdateProject",
+			Handler:    _OcpProjectApi_UpdateProject_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

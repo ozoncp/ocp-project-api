@@ -28,6 +28,8 @@ type OcpRepoApiClient interface {
 	MultiCreateRepo(ctx context.Context, in *MultiCreateRepoRequest, opts ...grpc.CallOption) (*MultiCreateRepoResponse, error)
 	// Remove repo by id
 	RemoveRepo(ctx context.Context, in *RemoveRepoRequest, opts ...grpc.CallOption) (*RemoveRepoResponse, error)
+	// Update repo
+	UpdateRepo(ctx context.Context, in *UpdateRepoRequest, opts ...grpc.CallOption) (*UpdateRepoResponse, error)
 }
 
 type ocpRepoApiClient struct {
@@ -83,6 +85,15 @@ func (c *ocpRepoApiClient) RemoveRepo(ctx context.Context, in *RemoveRepoRequest
 	return out, nil
 }
 
+func (c *ocpRepoApiClient) UpdateRepo(ctx context.Context, in *UpdateRepoRequest, opts ...grpc.CallOption) (*UpdateRepoResponse, error) {
+	out := new(UpdateRepoResponse)
+	err := c.cc.Invoke(ctx, "/ocp.repo.api.OcpRepoApi/UpdateRepo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OcpRepoApiServer is the server API for OcpRepoApi service.
 // All implementations must embed UnimplementedOcpRepoApiServer
 // for forward compatibility
@@ -97,6 +108,8 @@ type OcpRepoApiServer interface {
 	MultiCreateRepo(context.Context, *MultiCreateRepoRequest) (*MultiCreateRepoResponse, error)
 	// Remove repo by id
 	RemoveRepo(context.Context, *RemoveRepoRequest) (*RemoveRepoResponse, error)
+	// Update repo
+	UpdateRepo(context.Context, *UpdateRepoRequest) (*UpdateRepoResponse, error)
 	mustEmbedUnimplementedOcpRepoApiServer()
 }
 
@@ -118,6 +131,9 @@ func (UnimplementedOcpRepoApiServer) MultiCreateRepo(context.Context, *MultiCrea
 }
 func (UnimplementedOcpRepoApiServer) RemoveRepo(context.Context, *RemoveRepoRequest) (*RemoveRepoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveRepo not implemented")
+}
+func (UnimplementedOcpRepoApiServer) UpdateRepo(context.Context, *UpdateRepoRequest) (*UpdateRepoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRepo not implemented")
 }
 func (UnimplementedOcpRepoApiServer) mustEmbedUnimplementedOcpRepoApiServer() {}
 
@@ -222,6 +238,24 @@ func _OcpRepoApi_RemoveRepo_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OcpRepoApi_UpdateRepo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRepoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpRepoApiServer).UpdateRepo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.repo.api.OcpRepoApi/UpdateRepo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpRepoApiServer).UpdateRepo(ctx, req.(*UpdateRepoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OcpRepoApi_ServiceDesc is the grpc.ServiceDesc for OcpRepoApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -248,6 +282,10 @@ var OcpRepoApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveRepo",
 			Handler:    _OcpRepoApi_RemoveRepo_Handler,
+		},
+		{
+			MethodName: "UpdateRepo",
+			Handler:    _OcpRepoApi_UpdateRepo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

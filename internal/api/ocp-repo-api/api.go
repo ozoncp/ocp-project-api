@@ -167,6 +167,35 @@ func (a *api) RemoveRepo(
 	return response, nil
 }
 
+func (a *api) UpdateRepo(
+	ctx context.Context,
+	req *desc.UpdateRepoRequest,
+) (*desc.UpdateRepoResponse, error) {
+	log.Info().Msgf("Got UpdateRepoRequest: {repo_id: %d}", req.Repo.Id)
+
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	project := models.Repo{
+		Id:        req.Repo.Id,
+		ProjectId: req.Repo.ProjectId,
+		UserId:    req.Repo.UserId,
+		Link:      req.Repo.Link,
+	}
+	updated, err := a.repoStorage.UpdateRepo(ctx, project)
+	if err != nil {
+		log.Error().Msgf("projectStorage.UpdateProject() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	response := &desc.UpdateRepoResponse{
+		Found: updated,
+	}
+
+	return response, nil
+}
+
 func NewOcpRepoApi(repoStorage storage.RepoStorage) desc.OcpRepoApiServer {
 	return &api{repoStorage: repoStorage}
 }

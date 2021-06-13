@@ -44,6 +44,13 @@ service OcpProjectApi {
       delete: "/projects/{project_id}"
     };
   }
+
+  // Update project
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {
+    option (google.api.http) = {
+      post: "/projects"
+    };
+  }
 }
 
 message ListProjectsRequest {
@@ -86,6 +93,14 @@ message DescribeProjectRequest {
 
 message DescribeProjectResponse {
   Project project = 1;
+}
+
+message UpdateProjectRequest {
+  Project project = 1;
+}
+
+message UpdateProjectResponse {
+  bool found = 1;
 }
 
 // Project description

@@ -781,6 +781,152 @@ var _ interface {
 	ErrorName() string
 } = DescribeRepoResponseValidationError{}
 
+// Validate checks the field values on UpdateRepoRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *UpdateRepoRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetRepo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateRepoRequestValidationError{
+				field:  "Repo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateRepoRequestValidationError is the validation error returned by
+// UpdateRepoRequest.Validate if the designated constraints aren't met.
+type UpdateRepoRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateRepoRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateRepoRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateRepoRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateRepoRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateRepoRequestValidationError) ErrorName() string {
+	return "UpdateRepoRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateRepoRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateRepoRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateRepoRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateRepoRequestValidationError{}
+
+// Validate checks the field values on UpdateRepoResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateRepoResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Found
+
+	return nil
+}
+
+// UpdateRepoResponseValidationError is the validation error returned by
+// UpdateRepoResponse.Validate if the designated constraints aren't met.
+type UpdateRepoResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateRepoResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateRepoResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateRepoResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateRepoResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateRepoResponseValidationError) ErrorName() string {
+	return "UpdateRepoResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateRepoResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateRepoResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateRepoResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateRepoResponseValidationError{}
+
 // Validate checks the field values on Repo with the rules defined in the proto
 // definition for this message. If any rules are violated, an error is returned.
 func (m *Repo) Validate() error {

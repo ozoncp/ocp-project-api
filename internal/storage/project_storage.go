@@ -19,6 +19,7 @@ type ProjectStorage interface {
 	RemoveProject(ctx context.Context, projectId uint64) (bool, error)
 	DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error)
 	ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error)
+	UpdateProject(ctx context.Context, project models.Project) (bool, error)
 }
 
 func NewProjectStorage(db *sqlx.DB, chunkSize int) ProjectStorage {
@@ -143,4 +144,22 @@ func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64
 		multiProjects = append(multiProjects, project)
 	}
 	return multiProjects, nil
+}
+
+func (ps *projectStorage) UpdateProject(ctx context.Context, project models.Project) (bool, error) {
+	query := squirrel.Update(projectTableName).
+		Set("course_id", project.CourseId).
+		Set("name", project.Name).
+		Where(squirrel.Eq{"id": project.Id}).
+		RunWith(ps.db).
+		PlaceholderFormat(squirrel.Dollar)
+
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt != 0, err
 }

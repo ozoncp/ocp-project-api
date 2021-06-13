@@ -44,6 +44,13 @@ service OcpRepoApi {
       delete: "/repos/{repo_id}"
     };
   }
+
+  // Update repo
+  rpc UpdateRepo(UpdateRepoRequest) returns (UpdateRepoResponse) {
+    option (google.api.http) = {
+      post: "/repos"
+    };
+  }
 }
 
 message ListReposRequest {
@@ -87,6 +94,14 @@ message DescribeRepoRequest {
 
 message DescribeRepoResponse {
   Repo repo = 1;
+}
+
+message UpdateRepoRequest {
+  Repo repo = 1;
+}
+
+message UpdateRepoResponse {
+  bool found = 1;
 }
 
 // Repo description

@@ -162,6 +162,34 @@ func (a *api) RemoveProject(
 	return response, nil
 }
 
+func (a *api) UpdateProject(
+	ctx context.Context,
+	req *desc.UpdateProjectRequest,
+) (*desc.UpdateProjectResponse, error) {
+	log.Info().Msgf("Got UpdateProjectRequest: {project_id: %d}", req.Project.Id)
+
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	project := models.Project{
+		Id:       req.Project.Id,
+		CourseId: req.Project.CourseId,
+		Name:     req.Project.Name,
+	}
+	updated, err := a.projectStorage.UpdateProject(ctx, project)
+	if err != nil {
+		log.Error().Msgf("projectStorage.UpdateProject() returns error: %v", err)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	response := &desc.UpdateProjectResponse{
+		Found: updated,
+	}
+
+	return response, nil
+}
+
 func NewOcpProjectApi(projectStorage storage.ProjectStorage) desc.OcpProjectApiServer {
 	return &api{projectStorage: projectStorage}
 }
