@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"github.com/ozoncp/ocp-project-api/internal/tracer"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	tracer.InitTracing("ocp_project_api")
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	debug := flag.Bool("debug", false, "sets log level to debug")
 

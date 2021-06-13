@@ -19,8 +19,8 @@ import (
 
 const (
 	grpcPort  = ":8083"
-	httpPort  = ":8080"
-	chunkSize = 10
+	httpPort  = ":8081"
+	chunkSize = 1
 )
 
 func runGrpcAndGateway() error {

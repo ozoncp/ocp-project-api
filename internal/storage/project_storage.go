@@ -3,8 +3,10 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
 )
@@ -48,6 +50,10 @@ func (ps *projectStorage) AddProject(ctx context.Context, project models.Project
 }
 
 func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models.Project) (int64, error) {
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiAddProject global")
+	defer span.Finish()
+
 	projectBulks, err := utils.ProjectsSplitToBulks(projects, ps.chunkSize)
 	if err != nil {
 		return 0, err
@@ -55,30 +61,43 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 
 	var rowsAffected int64
 
-	for _, bulk := range projectBulks {
-		query := squirrel.Insert(projectTableName).
-			Columns("course_id", "name").
-			RunWith(ps.db).
-			PlaceholderFormat(squirrel.Dollar)
+	for index, bulk := range projectBulks {
+		err = func() error {
+			// Create a Child Span. Note that we're using the ChildOf option.
+			childSpan := tracer.StartSpan(
+				fmt.Sprintf("MultiAddProject for bulk %d", index),
+				opentracing.ChildOf(span.Context()),
+			)
+			defer childSpan.Finish()
 
-		for _, proj := range bulk {
-			query = query.Values(proj.CourseId, proj.Name)
-		}
+			query := squirrel.Insert(projectTableName).
+				Columns("course_id", "name").
+				RunWith(ps.db).
+				PlaceholderFormat(squirrel.Dollar)
 
-		var result sql.Result
-		result, err = query.ExecContext(ctx)
+			for _, proj := range bulk {
+				query = query.Values(proj.CourseId, proj.Name)
+			}
+
+			var result sql.Result
+			result, err = query.ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			var cnt int64
+			cnt, err = result.RowsAffected()
+			if err != nil {
+				// so RowsAffected() not supported
+				cnt = 0
+			}
+			rowsAffected = rowsAffected + cnt
+			return nil
+		}()
+
 		if err != nil {
 			return rowsAffected, err
 		}
-
-		var cnt int64
-		cnt, err = result.RowsAffected()
-		if err != nil {
-			// so RowsAffected() not supported
-			cnt = 0
-		}
-		rowsAffected = rowsAffected + cnt
-
 	}
 	// we might get error from RowsAffected()
 	return rowsAffected, err

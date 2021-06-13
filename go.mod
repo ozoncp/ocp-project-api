@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/Shopify/sarama v1.29.0
 	github.com/golang/mock v1.5.0
@@ -12,10 +13,15 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.13.0
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ozoncp/ocp-project-api/pkg/ocp-project-api v0.0.0-00010101000000-000000000000
 	github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api v0.0.0-00010101000000-000000000000
 	github.com/rs/zerolog v1.22.0
+	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/uber/jaeger-client-go v2.29.1+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible
+	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.38.0
 )
