@@ -22,11 +22,11 @@ func (a *api) ListRepos(
 	ctx context.Context,
 	req *desc.ListReposRequest,
 ) (*desc.ListReposResponse, error) {
+	log.Info().Msgf("Got ListRepoRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got ListRepoRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
 	repos, err := a.repoStorage.ListRepos(ctx, req.Limit, req.Offset)
 	if err != nil {
@@ -57,7 +57,6 @@ func (a *api) DescribeRepo(
 	ctx context.Context,
 	req *desc.DescribeRepoRequest,
 ) (*desc.DescribeRepoResponse, error) {
-
 	log.Info().Msgf("Got DescribeRepoRequest: {repo_id: %d}", req.RepoId)
 
 	if err := req.Validate(); err != nil {
@@ -86,12 +85,12 @@ func (a *api) CreateRepo(
 	ctx context.Context,
 	req *desc.CreateRepoRequest,
 ) (*desc.CreateRepoResponse, error) {
+	log.Info().Msgf(
+		"Got CreateRepoRequest: {project_id: %d, user_id: %d, link: %s}", req.ProjectId, req.UserId, req.Link)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf(
-		"Got CreateRepoRequest: {project_id: %d, user_id: %d, link: %s}", req.ProjectId, req.UserId, req.Link)
 
 	repo := models.Repo{
 		ProjectId: req.ProjectId,
@@ -116,11 +115,11 @@ func (a *api) MultiCreateRepo(
 	ctx context.Context,
 	req *desc.MultiCreateRepoRequest,
 ) (*desc.MultiCreateRepoResponse, error) {
+	log.Info().Msgf("Got MultiCreateRepoRequest: {repos count: %d}", len(req.Repos))
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got MultiCreateRepoRequest: {repos count: %d}", len(req.Repos))
 
 	repos := make([]models.Repo, 0, len(req.Repos))
 	for _, reqRepo := range req.Repos {
@@ -149,11 +148,11 @@ func (a *api) RemoveRepo(
 	ctx context.Context,
 	req *desc.RemoveRepoRequest,
 ) (*desc.RemoveRepoResponse, error) {
+	log.Info().Msgf("Got RemoveRepoRequest: {repo_id: %d}", req.RepoId)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got RemoveRepoRequest: {repo_id: %d}", req.RepoId)
 
 	removed, err := a.repoStorage.RemoveRepo(ctx, req.RepoId)
 	if err != nil {

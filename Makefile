@@ -36,6 +36,11 @@ PHONY: .build
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
 
+PHONY: test
+test:
+		go test -coverprofile=coverage.out ./...
+		go tool cover -func=coverage.out
+
 PHONY: install
 install: build .install
 
