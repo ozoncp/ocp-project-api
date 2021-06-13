@@ -110,6 +110,21 @@ func (mr *MockRepoStorageMockRecorder) RemoveRepo(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRepo", reflect.TypeOf((*MockRepoStorage)(nil).RemoveRepo), arg0, arg1)
 }
 
+// UpdateRepo mocks base method.
+func (m *MockRepoStorage) UpdateRepo(arg0 context.Context, arg1 models.Repo) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRepo", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateRepo indicates an expected call of UpdateRepo.
+func (mr *MockRepoStorageMockRecorder) UpdateRepo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepo", reflect.TypeOf((*MockRepoStorage)(nil).UpdateRepo), arg0, arg1)
+}
+
 // MockProjectStorage is a mock of ProjectStorage interface.
 type MockProjectStorage struct {
 	ctrl     *gomock.Controller
@@ -206,4 +221,19 @@ func (m *MockProjectStorage) RemoveProject(arg0 context.Context, arg1 uint64) (b
 func (mr *MockProjectStorageMockRecorder) RemoveProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveProject", reflect.TypeOf((*MockProjectStorage)(nil).RemoveProject), arg0, arg1)
+}
+
+// UpdateProject mocks base method.
+func (m *MockProjectStorage) UpdateProject(arg0 context.Context, arg1 models.Project) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProject", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateProject indicates an expected call of UpdateProject.
+func (mr *MockProjectStorageMockRecorder) UpdateProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProject", reflect.TypeOf((*MockProjectStorage)(nil).UpdateProject), arg0, arg1)
 }
