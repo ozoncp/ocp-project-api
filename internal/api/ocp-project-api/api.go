@@ -22,11 +22,11 @@ func (a *api) ListProjects(
 	ctx context.Context,
 	req *desc.ListProjectsRequest,
 ) (*desc.ListProjectsResponse, error) {
+	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
 	projects, err := a.projectStorage.ListProjects(ctx, req.Limit, req.Offset)
 	if err != nil {
@@ -56,7 +56,6 @@ func (a *api) DescribeProject(
 	ctx context.Context,
 	req *desc.DescribeProjectRequest,
 ) (*desc.DescribeProjectResponse, error) {
-
 	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
 
 	if err := req.Validate(); err != nil {
@@ -84,11 +83,11 @@ func (a *api) CreateProject(
 	ctx context.Context,
 	req *desc.CreateProjectRequest,
 ) (*desc.CreateProjectResponse, error) {
+	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
 
 	project := models.Project{
 		CourseId: req.CourseId,
@@ -112,11 +111,11 @@ func (a *api) MultiCreateProject(
 	ctx context.Context,
 	req *desc.MultiCreateProjectRequest,
 ) (*desc.MultiCreateProjectResponse, error) {
+	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
 
 	projects := make([]models.Project, 0, len(req.Projects))
 	for _, reqProject := range req.Projects {
@@ -144,11 +143,11 @@ func (a *api) RemoveProject(
 	ctx context.Context,
 	req *desc.RemoveProjectRequest,
 ) (*desc.RemoveProjectResponse, error) {
+	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
 
 	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
 	if err != nil {
