@@ -376,7 +376,6 @@ var _ = Describe("Api", func() {
 	Context("multi create project: split to bulks", func() {
 		BeforeEach(func() {
 			projectStorage = storage.NewProjectStorage(sqlxDB, 1)
-			logProducer = mocks.NewMockProducer(ctrl)
 			grpcApi = projectApi.NewOcpProjectApi(projectStorage, logProducer)
 
 			multiCreateRequest = &desc.MultiCreateProjectRequest{

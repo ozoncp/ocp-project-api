@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	repoApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
+	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
 	"github.com/rs/zerolog/log"
@@ -36,7 +37,15 @@ func runGrpcAndGateway() error {
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage))
+
+	var logProducer producer.Producer
+	logProducer, err = producer.NewProducer(ctx, "events")
+	if err != nil {
+		log.Error().Msgf("Kafka producer creation failed: %v", err)
+		return err
+	}
+
+	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Msgf("Grpc server error: %v", err)

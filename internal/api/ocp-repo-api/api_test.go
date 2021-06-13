@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
+	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
@@ -17,7 +19,8 @@ import (
 
 var _ = Describe("Api", func() {
 	var (
-		ctx context.Context
+		ctx  context.Context
+		ctrl *gomock.Controller
 
 		db     *sql.DB
 		sqlxDB *sqlx.DB
@@ -28,6 +31,7 @@ var _ = Describe("Api", func() {
 			{Id: 2, ProjectId: 2, UserId: 2, Link: "2"},
 		}
 
+		logProducer *mocks.MockProducer
 		repoStorage storage.RepoStorage
 		grpcApi     desc.OcpRepoApiServer
 
@@ -50,6 +54,7 @@ var _ = Describe("Api", func() {
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
+		ctrl = gomock.NewController(GinkgoT())
 
 		db, mock, err = sqlmock.New()
 		Expect(err).Should(BeNil())
@@ -57,7 +62,8 @@ var _ = Describe("Api", func() {
 		sqlxDB = sqlx.NewDb(db, "sqlmock")
 
 		repoStorage = storage.NewRepoStorage(sqlxDB, 2)
-		grpcApi = projectApi.NewOcpRepoApi(repoStorage)
+		logProducer = mocks.NewMockProducer(ctrl)
+		grpcApi = projectApi.NewOcpRepoApi(repoStorage, logProducer)
 	})
 
 	JustBeforeEach(func() {
@@ -67,6 +73,7 @@ var _ = Describe("Api", func() {
 		mock.ExpectClose()
 		err = db.Close()
 		Expect(err).Should(BeNil())
+		ctrl.Finish()
 	})
 
 	Context("create repo simple", func() {
@@ -80,6 +87,8 @@ var _ = Describe("Api", func() {
 			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(createRequest.ProjectId, createRequest.UserId, createRequest.Link).
 				WillReturnRows(rows)
+
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
 		})
@@ -186,6 +195,8 @@ var _ = Describe("Api", func() {
 
 			mock.ExpectExec("DELETE FROM repos").
 				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
 		})
@@ -372,7 +383,7 @@ var _ = Describe("Api", func() {
 	Context("multi create project: split to bulks", func() {
 		BeforeEach(func() {
 			repoStorage = storage.NewRepoStorage(sqlxDB, 1)
-			grpcApi = projectApi.NewOcpRepoApi(repoStorage)
+			grpcApi = projectApi.NewOcpRepoApi(repoStorage, logProducer)
 
 			multiCreateRequest = &desc.MultiCreateRepoRequest{
 				Repos: []*desc.NewRepo{
