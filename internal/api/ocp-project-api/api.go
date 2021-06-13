@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/ozoncp/ocp-project-api/internal/models"
+	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
+	"time"
 
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
 
@@ -16,6 +18,7 @@ import (
 type api struct {
 	desc.UnimplementedOcpProjectApiServer
 	projectStorage storage.ProjectStorage
+	logProducer    producer.Producer
 }
 
 func (a *api) ListProjects(
@@ -104,6 +107,11 @@ func (a *api) CreateProject(
 		ProjectId: id,
 	}
 
+	err = a.logProducer.SendMessage(
+		producer.CreateProjectEventMessage(producer.Created, id, time.Now()))
+	if err != nil {
+		log.Warn().Msgf("CreateProject: logProducer.SendMessage(...) returns error: %v", err)
+	}
 	return response, nil
 }
 
@@ -159,6 +167,14 @@ func (a *api) RemoveProject(
 		Found: removed,
 	}
 
+	if removed {
+		err = a.logProducer.SendMessage(
+			producer.CreateProjectEventMessage(producer.Removed, req.ProjectId, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("RemoveProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+	}
+
 	return response, nil
 }
 
@@ -187,9 +203,17 @@ func (a *api) UpdateProject(
 		Found: updated,
 	}
 
+	if updated {
+		err = a.logProducer.SendMessage(
+			producer.CreateProjectEventMessage(producer.Updated, req.Project.Id, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("UpdateProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+	}
+
 	return response, nil
 }
 
-func NewOcpProjectApi(projectStorage storage.ProjectStorage) desc.OcpProjectApiServer {
-	return &api{projectStorage: projectStorage}
+func NewOcpProjectApi(projectStorage storage.ProjectStorage, logProducer producer.Producer) desc.OcpProjectApiServer {
+	return &api{projectStorage: projectStorage, logProducer: logProducer}
 }
