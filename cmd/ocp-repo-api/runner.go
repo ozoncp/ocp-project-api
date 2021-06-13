@@ -5,9 +5,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-project-api"
+	repoApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
-	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
+	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	grpcPort  = ":8082"
+	grpcPort  = ":8083"
 	httpPort  = ":8080"
 	chunkSize = 10
 )
@@ -32,11 +32,11 @@ func runGrpcAndGateway() error {
 		return err
 	}
 
-	projectStorage := storage.NewProjectStorage(db, chunkSize)
+	repoStorage := storage.NewRepoStorage(db, chunkSize)
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	desc.RegisterOcpProjectApiServer(grpcServer, projectApi.NewOcpProjectApi(projectStorage))
+	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Msgf("Grpc server error: %v", err)
@@ -53,7 +53,7 @@ func runGrpcAndGateway() error {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	group.Go(func() error {
-		if err := desc.RegisterOcpProjectApiHandlerFromEndpoint(ctx, gwmux, grpcPort, opts); err != nil {
+		if err := desc.RegisterOcpRepoApiHandlerFromEndpoint(ctx, gwmux, grpcPort, opts); err != nil {
 			log.Error().Msgf("Register gateway fails: %v", err)
 			return err
 		}

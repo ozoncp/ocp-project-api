@@ -24,6 +24,8 @@ type OcpProjectApiClient interface {
 	DescribeProject(ctx context.Context, in *DescribeProjectRequest, opts ...grpc.CallOption) (*DescribeProjectResponse, error)
 	// Create new project
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	// Create new projects
+	MultiCreateProject(ctx context.Context, in *MultiCreateProjectRequest, opts ...grpc.CallOption) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error)
 }
@@ -38,7 +40,7 @@ func NewOcpProjectApiClient(cc grpc.ClientConnInterface) OcpProjectApiClient {
 
 func (c *ocpProjectApiClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
 	out := new(ListProjectsResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/ListProjects", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/ListProjects", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +49,7 @@ func (c *ocpProjectApiClient) ListProjects(ctx context.Context, in *ListProjects
 
 func (c *ocpProjectApiClient) DescribeProject(ctx context.Context, in *DescribeProjectRequest, opts ...grpc.CallOption) (*DescribeProjectResponse, error) {
 	out := new(DescribeProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/DescribeProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/DescribeProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,16 @@ func (c *ocpProjectApiClient) DescribeProject(ctx context.Context, in *DescribeP
 
 func (c *ocpProjectApiClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
 	out := new(CreateProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/CreateProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/CreateProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ocpProjectApiClient) MultiCreateProject(ctx context.Context, in *MultiCreateProjectRequest, opts ...grpc.CallOption) (*MultiCreateProjectResponse, error) {
+	out := new(MultiCreateProjectResponse)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/MultiCreateProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +76,7 @@ func (c *ocpProjectApiClient) CreateProject(ctx context.Context, in *CreateProje
 
 func (c *ocpProjectApiClient) RemoveProject(ctx context.Context, in *RemoveProjectRequest, opts ...grpc.CallOption) (*RemoveProjectResponse, error) {
 	out := new(RemoveProjectResponse)
-	err := c.cc.Invoke(ctx, "/ocp.task.api.OcpProjectApi/RemoveProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/RemoveProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +93,8 @@ type OcpProjectApiServer interface {
 	DescribeProject(context.Context, *DescribeProjectRequest) (*DescribeProjectResponse, error)
 	// Create new project
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	// Create new projects
+	MultiCreateProject(context.Context, *MultiCreateProjectRequest) (*MultiCreateProjectResponse, error)
 	// Remove project by id
 	RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error)
 	mustEmbedUnimplementedOcpProjectApiServer()
@@ -99,6 +112,9 @@ func (UnimplementedOcpProjectApiServer) DescribeProject(context.Context, *Descri
 }
 func (UnimplementedOcpProjectApiServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
+}
+func (UnimplementedOcpProjectApiServer) MultiCreateProject(context.Context, *MultiCreateProjectRequest) (*MultiCreateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateProject not implemented")
 }
 func (UnimplementedOcpProjectApiServer) RemoveProject(context.Context, *RemoveProjectRequest) (*RemoveProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveProject not implemented")
@@ -126,7 +142,7 @@ func _OcpProjectApi_ListProjects_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/ListProjects",
+		FullMethod: "/ocp.project.api.OcpProjectApi/ListProjects",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).ListProjects(ctx, req.(*ListProjectsRequest))
@@ -144,7 +160,7 @@ func _OcpProjectApi_DescribeProject_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/DescribeProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/DescribeProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).DescribeProject(ctx, req.(*DescribeProjectRequest))
@@ -162,10 +178,28 @@ func _OcpProjectApi_CreateProject_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/CreateProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/CreateProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).CreateProject(ctx, req.(*CreateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OcpProjectApi_MultiCreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpProjectApiServer).MultiCreateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.project.api.OcpProjectApi/MultiCreateProject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpProjectApiServer).MultiCreateProject(ctx, req.(*MultiCreateProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -180,7 +214,7 @@ func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocp.task.api.OcpProjectApi/RemoveProject",
+		FullMethod: "/ocp.project.api.OcpProjectApi/RemoveProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OcpProjectApiServer).RemoveProject(ctx, req.(*RemoveProjectRequest))
@@ -192,7 +226,7 @@ func _OcpProjectApi_RemoveProject_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocp.task.api.OcpProjectApi",
+	ServiceName: "ocp.project.api.OcpProjectApi",
 	HandlerType: (*OcpProjectApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -206,6 +240,10 @@ var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateProject",
 			Handler:    _OcpProjectApi_CreateProject_Handler,
+		},
+		{
+			MethodName: "MultiCreateProject",
+			Handler:    _OcpProjectApi_MultiCreateProject_Handler,
 		},
 		{
 			MethodName: "RemoveProject",

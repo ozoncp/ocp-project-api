@@ -1,6 +1,7 @@
 package flusher_test
 
 import (
+	"context"
 	"errors"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -12,6 +13,7 @@ import (
 
 var _ = Describe("Flush into RepoStorage", func() {
 	var (
+		ctx  context.Context
 		ctrl *gomock.Controller
 
 		mockRepoStorage *mocks.MockRepoStorage
@@ -24,6 +26,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 		chunkSize int
 	)
 	BeforeEach(func() {
+		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 
 		mockRepoStorage = mocks.NewMockRepoStorage(ctrl)
@@ -31,7 +34,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 
 	JustBeforeEach(func() {
 		f = flusher.NewFlusher(chunkSize, mockRepoStorage, &mocks.MockProjectStorage{})
-		rest = f.FlushRepos(repos)
+		rest = f.FlushRepos(ctx, repos)
 	})
 
 	AfterEach(func() {
@@ -46,7 +49,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Any()).Return(nil).Times(0)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Any()).Return(int64(0), nil).Times(0)
 		})
 
 		It("", func() {
@@ -63,7 +66,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1)
 		})
 
 		It("", func() {
@@ -79,7 +82,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().AddRepos(gomock.Len(len(repos))).Return(errors.New("some error")).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos))).Return(int64(0), errors.New("some error")).Times(1)
 		})
 
 		It("", func() {
@@ -100,9 +103,10 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockRepoStorage.EXPECT().AddRepos(
-					gomock.Len(len(repos)-chunkSize)).Return(errors.New("some error")).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(
+					ctx,
+					gomock.Len(len(repos)-chunkSize)).Return(int64(0), errors.New("some error")).Times(1),
 			)
 		})
 
@@ -126,8 +130,8 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockRepoStorage.EXPECT().AddRepos(gomock.Len(len(repos)-chunkSize)).Return(nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos)-chunkSize)).Return(int64(0), nil).Times(1),
 			)
 		})
 
@@ -139,6 +143,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 
 var _ = Describe("Flush into ProjectStorage", func() {
 	var (
+		ctx  context.Context
 		ctrl *gomock.Controller
 
 		mockProjectStorage *mocks.MockProjectStorage
@@ -151,6 +156,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 		chunkSize int
 	)
 	BeforeEach(func() {
+		ctx = context.Background()
 		ctrl = gomock.NewController(GinkgoT())
 
 		mockProjectStorage = mocks.NewMockProjectStorage(ctrl)
@@ -158,7 +164,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 
 	JustBeforeEach(func() {
 		f = flusher.NewFlusher(chunkSize, &mocks.MockRepoStorage{}, mockProjectStorage)
-		rest = f.FlushProjects(projects)
+		rest = f.FlushProjects(ctx, projects)
 	})
 
 	AfterEach(func() {
@@ -173,7 +179,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 				{Id: 1, CourseId: 1, Name: "1"},
 			}
 
-			mockProjectStorage.EXPECT().AddProjects(gomock.Any()).Return(nil).Times(0)
+			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Any()).Return(int64(0), nil).Times(0)
 		})
 
 		It("", func() {
@@ -190,7 +196,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 				{Id: 1, CourseId: 1, Name: "1"},
 			}
 
-			mockProjectStorage.EXPECT().AddProjects(gomock.Len(chunkSize)).Return(nil).Times(1)
+			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1)
 		})
 
 		It("", func() {
@@ -206,7 +212,8 @@ var _ = Describe("Flush into ProjectStorage", func() {
 				{Id: 1, CourseId: 1, Name: "1"},
 			}
 
-			mockProjectStorage.EXPECT().AddProjects(gomock.Len(len(projects))).Return(errors.New("some error")).Times(1)
+			mockProjectStorage.EXPECT().MultiAddProject(
+				ctx, gomock.Len(len(projects))).Return(int64(0), errors.New("some error")).Times(1)
 		})
 
 		It("", func() {
@@ -227,9 +234,10 @@ var _ = Describe("Flush into ProjectStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockProjectStorage.EXPECT().AddProjects(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockProjectStorage.EXPECT().AddProjects(
-					gomock.Len(len(projects)-chunkSize)).Return(errors.New("some error")).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(
+					ctx,
+					gomock.Len(len(projects)-chunkSize)).Return(int64(0), errors.New("some error")).Times(1),
 			)
 		})
 
@@ -253,8 +261,11 @@ var _ = Describe("Flush into ProjectStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockProjectStorage.EXPECT().AddProjects(gomock.Len(chunkSize)).Return(nil).Times(1),
-				mockProjectStorage.EXPECT().AddProjects(gomock.Len(len(projects)-chunkSize)).Return(nil).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(
+					ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(
+					ctx,
+					gomock.Len(len(projects)-chunkSize)).Return(int64(0), nil).Times(1),
 			)
 		})
 

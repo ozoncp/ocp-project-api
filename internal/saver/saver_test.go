@@ -51,8 +51,8 @@ var _ = Describe("Saver", func() {
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
-			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return(nil).MinTimes(1)
-			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Any()).Return(nil).MinTimes(1)
 		})
 
 		JustBeforeEach(func() {
@@ -86,10 +86,10 @@ var _ = Describe("Saver", func() {
 			s.SaveProject(project)
 			s.SaveRepo(repo)
 
-			mockFlusher.EXPECT().FlushRepos(gomock.Len(1)).Return(nil).Times(1)
-			mockFlusher.EXPECT().FlushProjects(gomock.Len(1)).Return(nil).Times(1)
-			mockFlusher.EXPECT().FlushRepos(gomock.Len(0)).Return(nil).AnyTimes()
-			mockFlusher.EXPECT().FlushProjects(gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Len(1)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Len(1)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Len(0)).Return(nil).AnyTimes()
 		})
 
 		JustBeforeEach(func() {
@@ -123,10 +123,10 @@ var _ = Describe("Saver", func() {
 			s.SaveProject(project)
 			s.SaveRepo(repo)
 
-			mockFlusher.EXPECT().FlushRepos(gomock.Len(2)).Return(nil).Times(1)
-			mockFlusher.EXPECT().FlushProjects(gomock.Len(2)).Return(nil).Times(1)
-			mockFlusher.EXPECT().FlushRepos(gomock.Len(0)).Return(nil).AnyTimes()
-			mockFlusher.EXPECT().FlushProjects(gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Len(2)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Len(2)).Return(nil).Times(1)
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Len(0)).Return(nil).AnyTimes()
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Len(0)).Return(nil).AnyTimes()
 
 		})
 
@@ -154,8 +154,8 @@ var _ = Describe("Saver", func() {
 
 			s.SaveProject(project)
 			s.SaveRepo(repo)
-			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return(nil).MinTimes(1)
-			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Any()).Return(nil).MinTimes(1)
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Any()).Return(nil).MinTimes(1)
 		})
 
 		JustBeforeEach(func() {
@@ -179,8 +179,8 @@ var _ = Describe("Saver", func() {
 			s.SaveProject(project)
 			s.SaveRepo(repo)
 
-			mockFlusher.EXPECT().FlushRepos(gomock.Any()).Return([]models.Repo{{}}).MinTimes(1)
-			mockFlusher.EXPECT().FlushProjects(gomock.Any()).Return([]models.Project{{}}).MinTimes(1)
+			mockFlusher.EXPECT().FlushRepos(ctx, gomock.Any()).Return([]models.Repo{{}}).MinTimes(1)
+			mockFlusher.EXPECT().FlushProjects(ctx, gomock.Any()).Return([]models.Project{{}}).MinTimes(1)
 		})
 
 		JustBeforeEach(func() {

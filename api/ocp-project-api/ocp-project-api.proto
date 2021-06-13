@@ -4,18 +4,16 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
 
-package ocp.task.api;
+package ocp.project.api;
 
-option go_package = "gihtub.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
-
-// Описание задачи
+option go_package = "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api;ocp_project_api";
 
 service OcpProjectApi {
 
   // Return projects list
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
     option (google.api.http) = {
-      get: "/projects"
+      get: "/projects/list/{limit}"
     };
   }
 
@@ -28,6 +26,13 @@ service OcpProjectApi {
 
   // Create new project
   rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/projects"
+    };
+  }
+
+  // Create new projects
+  rpc MultiCreateProject(MultiCreateProjectRequest) returns (MultiCreateProjectResponse) {
     option (google.api.http) = {
       post: "/projects"
     };
@@ -59,6 +64,14 @@ message CreateProjectResponse {
   uint64 project_id = 1;
 }
 
+message MultiCreateProjectRequest {
+  repeated NewProject projects = 1;
+}
+
+message MultiCreateProjectResponse {
+  int64 count_of_created = 1;
+}
+
 message RemoveProjectRequest {
   uint64 project_id = 1 [(validate.rules).uint64.gt = 0];
 }
@@ -80,4 +93,10 @@ message Project {
   uint64 id = 1;
   uint64 course_id = 2;
   string name = 3;
+}
+
+// Project description for multi creation
+message NewProject {
+  uint64 course_id = 1 [(validate.rules).uint64.gt = 0];
+  string name = 2;
 }

@@ -331,6 +331,157 @@ var _ interface {
 	ErrorName() string
 } = CreateProjectResponseValidationError{}
 
+// Validate checks the field values on MultiCreateProjectRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateProjectRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetProjects() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MultiCreateProjectRequestValidationError{
+					field:  fmt.Sprintf("Projects[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// MultiCreateProjectRequestValidationError is the validation error returned by
+// MultiCreateProjectRequest.Validate if the designated constraints aren't met.
+type MultiCreateProjectRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateProjectRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateProjectRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateProjectRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateProjectRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateProjectRequestValidationError) ErrorName() string {
+	return "MultiCreateProjectRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateProjectRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateProjectRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateProjectRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateProjectRequestValidationError{}
+
+// Validate checks the field values on MultiCreateProjectResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateProjectResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for CountOfCreated
+
+	return nil
+}
+
+// MultiCreateProjectResponseValidationError is the validation error returned
+// by MultiCreateProjectResponse.Validate if the designated constraints aren't met.
+type MultiCreateProjectResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateProjectResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateProjectResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateProjectResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateProjectResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateProjectResponseValidationError) ErrorName() string {
+	return "MultiCreateProjectResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateProjectResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateProjectResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateProjectResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateProjectResponseValidationError{}
+
 // Validate checks the field values on RemoveProjectRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -694,3 +845,76 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ProjectValidationError{}
+
+// Validate checks the field values on NewProject with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *NewProject) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetCourseId() <= 0 {
+		return NewProjectValidationError{
+			field:  "CourseId",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	// no validation rules for Name
+
+	return nil
+}
+
+// NewProjectValidationError is the validation error returned by
+// NewProject.Validate if the designated constraints aren't met.
+type NewProjectValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NewProjectValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NewProjectValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NewProjectValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NewProjectValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NewProjectValidationError) ErrorName() string { return "NewProjectValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NewProjectValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNewProject.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NewProjectValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NewProjectValidationError{}
