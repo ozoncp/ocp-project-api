@@ -105,8 +105,8 @@ message UpdateProjectResponse {
 
 // Project description
 message Project {
-  uint64 id = 1;
-  uint64 course_id = 2;
+  uint64 id = 1 [(validate.rules).uint64.gt = 0];
+  uint64 course_id = 2 [(validate.rules).uint64.gt = 0];
   string name = 3;
 }
 
