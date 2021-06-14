@@ -7,6 +7,7 @@ import (
 
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
+	"github.com/ozoncp/ocp-project-api/internal/prom"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
 
@@ -92,6 +93,11 @@ func (a *api) CreateRepo(
 	log.Info().Msgf(
 		"Got CreateRepoRequest: {project_id: %d, user_id: %d, link: %s}", req.ProjectId, req.UserId, req.Link)
 
+	opStatus := "failed"
+	defer func() {
+		prom.CreateRepoCounterInc(opStatus)
+	}()
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -117,6 +123,8 @@ func (a *api) CreateRepo(
 	if err != nil {
 		log.Warn().Msgf("CreateRepo: logProducer.SendMessage(...) returns error: %v", err)
 	}
+
+	opStatus = "success"
 
 	return response, nil
 }
@@ -160,6 +168,11 @@ func (a *api) RemoveRepo(
 ) (*desc.RemoveRepoResponse, error) {
 	log.Info().Msgf("Got RemoveRepoRequest: {repo_id: %d}", req.RepoId)
 
+	opStatus := "failed"
+	defer func() {
+		prom.RemoveRepoCounterInc(opStatus)
+	}()
+
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -180,6 +193,8 @@ func (a *api) RemoveRepo(
 		if err != nil {
 			log.Warn().Msgf("RemoveRepo: logProducer.SendMessage(...) returns error: %v", err)
 		}
+
+		opStatus = "success"
 	}
 
 	return response, nil
@@ -190,6 +205,10 @@ func (a *api) UpdateRepo(
 	req *desc.UpdateRepoRequest,
 ) (*desc.UpdateRepoResponse, error) {
 	log.Info().Msgf("Got UpdateRepoRequest: {repo_id: %d}", req.Repo.Id)
+	opStatus := "failed"
+	defer func() {
+		prom.UpdateRepoCounterInc(opStatus)
+	}()
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -217,6 +236,7 @@ func (a *api) UpdateRepo(
 		if err != nil {
 			log.Warn().Msgf("UpdateRepo: logProducer.SendMessage(...) returns error: %v", err)
 		}
+		opStatus = "success"
 	}
 
 	return response, nil

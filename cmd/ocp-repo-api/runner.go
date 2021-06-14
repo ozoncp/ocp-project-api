@@ -2,24 +2,29 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
+
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	repoApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
+	"github.com/ozoncp/ocp-project-api/internal/prom"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"net/http"
 )
 
 const (
-	grpcPort  = ":8083"
-	httpPort  = ":8081"
+	grpcPort = ":8083"
+	httpPort = ":8081"
+	promPort = ":9101"
+
 	chunkSize = 1
 )
 
@@ -76,6 +81,18 @@ func runGrpcAndGateway() error {
 			return err
 		}
 
+		return nil
+	})
+
+	group.Go(func() error {
+		prom.RegisterRepoMetrics()
+
+		http.Handle("/metrics", promhttp.Handler())
+		log.Info().Msgf("Prom http listening on %s", promPort)
+		if err = http.ListenAndServe(promPort, nil); err != nil {
+			log.Error().Msgf("Prom http server fails: %v", err)
+			return err
+		}
 		return nil
 	})
 
