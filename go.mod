@@ -16,8 +16,8 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ozoncp/ocp-project-api/pkg/ocp-project-api v0.0.0-00010101000000-000000000000
 	github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api v0.0.0-00010101000000-000000000000
+	github.com/prometheus/client_golang v1.11.0
 	github.com/rs/zerolog v1.22.0
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible

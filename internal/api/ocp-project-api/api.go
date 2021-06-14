@@ -7,6 +7,7 @@ import (
 
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
+	"github.com/ozoncp/ocp-project-api/internal/prom"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
 
@@ -113,6 +114,8 @@ func (a *api) CreateProject(
 	if err != nil {
 		log.Warn().Msgf("CreateProject: logProducer.SendMessage(...) returns error: %v", err)
 	}
+
+	prom.GetCreateProjectCounter().WithLabelValues("success").Inc()
 	return response, nil
 }
 
@@ -174,6 +177,7 @@ func (a *api) RemoveProject(
 		if err != nil {
 			log.Warn().Msgf("RemoveProject: logProducer.SendMessage(...) returns error: %v", err)
 		}
+		prom.GetRemoveProjectCounter().WithLabelValues("success").Inc()
 	}
 
 	return response, nil
@@ -210,6 +214,7 @@ func (a *api) UpdateProject(
 		if err != nil {
 			log.Warn().Msgf("UpdateProject: logProducer.SendMessage(...) returns error: %v", err)
 		}
+		prom.GetUpdateProjectCounter().WithLabelValues("success").Inc()
 	}
 
 	return response, nil
