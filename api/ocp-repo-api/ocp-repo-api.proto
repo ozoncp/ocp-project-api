@@ -106,9 +106,9 @@ message UpdateRepoResponse {
 
 // Repo description
 message Repo {
-  uint64 id = 1;
-  uint64 project_id = 2;
-  uint64 user_id = 3;
+  uint64 id = 1 [(validate.rules).uint64.gt = 0];
+  uint64 project_id = 2 [(validate.rules).uint64.gt = 0];
+  uint64 user_id = 3 [(validate.rules).uint64.gt = 0];
   string link = 4;
 }
 

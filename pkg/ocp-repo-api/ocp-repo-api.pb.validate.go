@@ -934,11 +934,26 @@ func (m *Repo) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Id
+	if m.GetId() <= 0 {
+		return RepoValidationError{
+			field:  "Id",
+			reason: "value must be greater than 0",
+		}
+	}
 
-	// no validation rules for ProjectId
+	if m.GetProjectId() <= 0 {
+		return RepoValidationError{
+			field:  "ProjectId",
+			reason: "value must be greater than 0",
+		}
+	}
 
-	// no validation rules for UserId
+	if m.GetUserId() <= 0 {
+		return RepoValidationError{
+			field:  "UserId",
+			reason: "value must be greater than 0",
+		}
+	}
 
 	// no validation rules for Link
 

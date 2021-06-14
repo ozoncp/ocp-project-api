@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
@@ -37,6 +38,9 @@ var _ = Describe("Api", func() {
 
 		createRequest  *desc.CreateRepoRequest
 		createResponse *desc.CreateRepoResponse
+
+		updateRequest  *desc.UpdateRepoRequest
+		updateResponse *desc.UpdateRepoResponse
 
 		describeRequest  *desc.DescribeRepoRequest
 		describeResponse *desc.DescribeRepoResponse
@@ -99,6 +103,29 @@ var _ = Describe("Api", func() {
 		})
 	})
 
+	Context("create repo: producer error", func() {
+		var repoId uint64 = 1
+
+		BeforeEach(func() {
+			createRequest = &desc.CreateRepoRequest{ProjectId: 1, UserId: 1, Link: "1"}
+
+			rows := sqlmock.NewRows([]string{"id"}).
+				AddRow(repoId)
+			mock.ExpectQuery("INSERT INTO repos").
+				WithArgs(createRequest.ProjectId, createRequest.UserId, createRequest.Link).
+				WillReturnRows(rows)
+
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
+
+			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(createResponse.RepoId).Should(Equal(repoId))
+		})
+	})
+
 	Context("create project: invalid argument", func() {
 		BeforeEach(func() {
 			createRequest = &desc.CreateRepoRequest{ProjectId: 0, UserId: 0, Link: "1"}
@@ -126,6 +153,117 @@ var _ = Describe("Api", func() {
 		It("", func() {
 			Expect(err).ShouldNot(BeNil())
 			Expect(createResponse).Should(BeNil())
+		})
+	})
+
+	Context("update repo simple", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateRepoRequest{
+				Repo: &desc.Repo{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+			}
+
+			mock.ExpectExec("UPDATE repos SET").
+				WithArgs(
+					updateRequest.Repo.ProjectId,
+					updateRequest.Repo.UserId,
+					updateRequest.Repo.Link,
+					updateRequest.Repo.Id).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().SendMessage(gomock.Any())
+
+			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(true))
+		})
+	})
+
+	Context("update repo: producer error", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateRepoRequest{
+				Repo: &desc.Repo{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+			}
+
+			mock.ExpectExec("UPDATE repos SET").
+				WithArgs(
+					updateRequest.Repo.ProjectId,
+					updateRequest.Repo.UserId,
+					updateRequest.Repo.Link,
+					updateRequest.Repo.Id).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
+
+			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(true))
+		})
+	})
+
+	Context("update repo: not updated", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateRepoRequest{
+				Repo: &desc.Repo{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+			}
+
+			mock.ExpectExec("UPDATE repos SET").
+				WithArgs(
+					updateRequest.Repo.ProjectId,
+					updateRequest.Repo.UserId,
+					updateRequest.Repo.Link,
+					updateRequest.Repo.Id).
+				WillReturnResult(sqlmock.NewResult(0, 0))
+
+			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(false))
+		})
+	})
+
+	Context("update repo: invalid argument", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateRepoRequest{
+				Repo: &desc.Repo{Id: 0, ProjectId: 0, UserId: 1, Link: "1"},
+			}
+
+			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(updateResponse).Should(BeNil())
+		})
+	})
+
+	Context("update repo: sql query returns error", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateRepoRequest{
+				Repo: &desc.Repo{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
+			}
+
+			mock.ExpectExec("UPDATE repos SET").
+				WithArgs(
+					updateRequest.Repo.ProjectId,
+					updateRequest.Repo.UserId,
+					updateRequest.Repo.Link,
+					updateRequest.Repo.Id).
+				WillReturnError(errors.New("i am bad database"))
+
+			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(updateResponse).Should(BeNil())
 		})
 	})
 
@@ -206,6 +344,27 @@ var _ = Describe("Api", func() {
 			Expect(removeResponse.Found).Should(Equal(true))
 		})
 	})
+
+	Context("remove project: producer error", func() {
+		var repoId uint64 = 1
+
+		BeforeEach(func() {
+			removeRequest = &desc.RemoveRepoRequest{RepoId: repoId}
+
+			mock.ExpectExec("DELETE FROM repos").
+				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
+
+			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(removeResponse.Found).Should(Equal(true))
+		})
+	})
+
 	Context("remove project: not found", func() {
 		var repoId uint64 = 1
 

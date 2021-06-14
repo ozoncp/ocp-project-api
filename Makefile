@@ -35,6 +35,7 @@ PHONY: .build
 .build:
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
+		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-simple-consumer cmd/ocp-simple-consumer/main.go
 
 PHONY: test
 test:
