@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"unsafe"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/opentracing/opentracing-go"
@@ -65,7 +67,7 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 		err = func() error {
 			// Create a Child Span. Note that we're using the ChildOf option.
 			childSpan := tracer.StartSpan(
-				fmt.Sprintf("MultiAddProject for bulk %d", index),
+				fmt.Sprintf("MultiAddProject for bulk %d, count of bytes: %d", index, len(bulk)*int(unsafe.Sizeof(models.Project{}))),
 				opentracing.ChildOf(span.Context()),
 			)
 			defer childSpan.Finish()
