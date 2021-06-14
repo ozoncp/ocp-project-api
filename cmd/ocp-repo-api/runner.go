@@ -44,10 +44,9 @@ func runGrpcAndGateway() error {
 	reflection.Register(grpcServer)
 
 	var logProducer producer.Producer
-	logProducer, err = producer.NewProducer(ctx, "events")
+	logProducer, err = producer.NewProducer(ctx)
 	if err != nil {
 		log.Error().Msgf("Kafka producer creation failed: %v", err)
-		return err
 	}
 
 	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))

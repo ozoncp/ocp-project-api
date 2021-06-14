@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/Shopify/sarama"
 	"github.com/rs/zerolog/log"
 )
@@ -13,11 +14,12 @@ type Producer interface {
 
 const (
 	capacity = 256
+	topic    = "events"
 )
 
 var brokers = []string{"127.0.0.1:9094"}
 
-func NewProducer(ctx context.Context, topic string) (Producer, error) {
+func NewProducer(ctx context.Context) (Producer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Partitioner = sarama.NewHashPartitioner
 	config.Producer.RequiredAcks = sarama.WaitForAll

@@ -92,11 +92,19 @@ func (a *api) CreateRepo(
 ) (*desc.CreateRepoResponse, error) {
 	log.Info().Msgf(
 		"Got CreateRepoRequest: {project_id: %d, user_id: %d, link: %s}", req.ProjectId, req.UserId, req.Link)
-
 	opStatus := "failed"
 	defer func() {
 		prom.CreateRepoCounterInc(opStatus)
 	}()
+
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -167,11 +175,19 @@ func (a *api) RemoveRepo(
 	req *desc.RemoveRepoRequest,
 ) (*desc.RemoveRepoResponse, error) {
 	log.Info().Msgf("Got RemoveRepoRequest: {repo_id: %d}", req.RepoId)
-
 	opStatus := "failed"
 	defer func() {
 		prom.RemoveRepoCounterInc(opStatus)
 	}()
+
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -209,6 +225,15 @@ func (a *api) UpdateRepo(
 	defer func() {
 		prom.UpdateRepoCounterInc(opStatus)
 	}()
+
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

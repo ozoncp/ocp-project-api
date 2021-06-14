@@ -93,6 +93,14 @@ func (a *api) CreateProject(
 	defer func() {
 		prom.CreateProjectCounterInc(opStatus)
 	}()
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -165,7 +173,16 @@ func (a *api) RemoveProject(
 		prom.RemoveProjectCounterInc(opStatus)
 	}()
 
-	if err := req.Validate(); err != nil {
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
+
+	if err = req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -201,7 +218,16 @@ func (a *api) UpdateProject(
 		prom.UpdateProjectCounterInc(opStatus)
 	}()
 
-	if err := req.Validate(); err != nil {
+	var err error
+	if a.logProducer == nil {
+		a.logProducer, err = producer.NewProducer(ctx)
+		if err != nil {
+			log.Error().Msgf("Something wrong with Kafka: %v", err)
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
+	}
+
+	if err = req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
