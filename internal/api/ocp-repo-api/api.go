@@ -3,11 +3,12 @@ package ocp_repo_api
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
-	"time"
 
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
 
@@ -34,7 +35,7 @@ func (a *api) ListRepos(
 	repos, err := a.repoStorage.ListRepos(ctx, req.Limit, req.Offset)
 	if err != nil {
 		log.Error().Msgf("repoStorage.ListRepos() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	respRepos := make([]*desc.Repo, 0, len(repos))
@@ -69,7 +70,7 @@ func (a *api) DescribeRepo(
 	repo, err := a.repoStorage.DescribeRepo(ctx, req.RepoId)
 	if err != nil {
 		log.Error().Msgf("repoStorage.DescribeRepo() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.DescribeRepoResponse{
@@ -104,7 +105,7 @@ func (a *api) CreateRepo(
 	id, err := a.repoStorage.AddRepo(ctx, repo)
 	if err != nil {
 		log.Error().Msgf("repoStorage.CreateRepo() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.CreateRepoResponse{
@@ -143,7 +144,7 @@ func (a *api) MultiCreateRepo(
 	cnt, err := a.repoStorage.MultiAddRepo(ctx, repos)
 	if err != nil {
 		log.Error().Msgf("repoStorage.CreateRepo() returns error: %v, count of created: %d", err, cnt)
-		return nil, status.Error(codes.NotFound, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
 	}
 
 	response := &desc.MultiCreateRepoResponse{
@@ -166,7 +167,7 @@ func (a *api) RemoveRepo(
 	removed, err := a.repoStorage.RemoveRepo(ctx, req.RepoId)
 	if err != nil {
 		log.Error().Msgf("repoStorage.RemoveRepo() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.RemoveRepoResponse{
@@ -203,7 +204,7 @@ func (a *api) UpdateRepo(
 	updated, err := a.repoStorage.UpdateRepo(ctx, project)
 	if err != nil {
 		log.Error().Msgf("projectStorage.UpdateProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.UpdateRepoResponse{

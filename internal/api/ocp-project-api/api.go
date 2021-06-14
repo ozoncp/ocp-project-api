@@ -3,11 +3,12 @@ package ocp_project_api
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
-	"time"
 
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
 
@@ -100,7 +101,7 @@ func (a *api) CreateProject(
 	id, err := a.projectStorage.AddProject(ctx, project)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.CreateProjectResponse{
@@ -137,7 +138,7 @@ func (a *api) MultiCreateProject(
 	cnt, err := a.projectStorage.MultiAddProject(ctx, projects)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v, count of created: %d", err, cnt)
-		return nil, status.Error(codes.NotFound, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
 	}
 
 	response := &desc.MultiCreateProjectResponse{
@@ -160,7 +161,7 @@ func (a *api) RemoveProject(
 	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
 	if err != nil {
 		log.Error().Msgf("projectStorage.RemoveProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.RemoveProjectResponse{
@@ -196,7 +197,7 @@ func (a *api) UpdateProject(
 	updated, err := a.projectStorage.UpdateProject(ctx, project)
 	if err != nil {
 		log.Error().Msgf("projectStorage.UpdateProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.UpdateProjectResponse{
