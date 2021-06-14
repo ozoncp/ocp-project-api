@@ -12,21 +12,21 @@ func RegisterProjectMetrics() {
 	// create a new counter vector
 	getCreateProjectCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "success_create_project_count", // metric name
+			Name: "create_project_count", // metric name
 			Help: "Number of successful created projects.",
 		},
 		[]string{"status"}, // labels
 	)
 	getUpdateProjectCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "success_update_project_count", // metric name
+			Name: "update_project_count", // metric name
 			Help: "Number of successful updated projects.",
 		},
 		[]string{"status"}, // labels
 	)
 	getRemoveProjectCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "success_remove_project_count", // metric name
+			Name: "remove_project_count", // metric name
 			Help: "Number of successful removed projects.",
 		},
 		[]string{"status"}, // labels
@@ -36,14 +36,20 @@ func RegisterProjectMetrics() {
 	prometheus.MustRegister(getCreateProjectCounter, getUpdateProjectCounter, getRemoveProjectCounter)
 }
 
-func GetCreateProjectCounter() *prometheus.CounterVec {
-	return getCreateProjectCounter
+func CreateProjectCounterInc(status string) {
+	if getCreateProjectCounter != nil {
+		getCreateProjectCounter.WithLabelValues(status).Inc()
+	}
 }
 
-func GetUpdateProjectCounter() *prometheus.CounterVec {
-	return getUpdateProjectCounter
+func UpdateProjectCounterInc(status string) {
+	if getUpdateProjectCounter != nil {
+		getUpdateProjectCounter.WithLabelValues(status).Inc()
+	}
 }
 
-func GetRemoveProjectCounter() *prometheus.CounterVec {
-	return getRemoveProjectCounter
+func RemoveProjectCounterInc(status string) {
+	if getRemoveProjectCounter != nil {
+		getRemoveProjectCounter.WithLabelValues(status).Inc()
+	}
 }

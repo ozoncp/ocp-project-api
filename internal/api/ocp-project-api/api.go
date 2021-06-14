@@ -89,6 +89,10 @@ func (a *api) CreateProject(
 	req *desc.CreateProjectRequest,
 ) (*desc.CreateProjectResponse, error) {
 	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
+	opStatus := "failed"
+	defer func() {
+		prom.CreateProjectCounterInc(opStatus)
+	}()
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -115,7 +119,7 @@ func (a *api) CreateProject(
 		log.Warn().Msgf("CreateProject: logProducer.SendMessage(...) returns error: %v", err)
 	}
 
-	prom.GetCreateProjectCounter().WithLabelValues("success").Inc()
+	opStatus = "success"
 	return response, nil
 }
 
@@ -156,6 +160,10 @@ func (a *api) RemoveProject(
 	req *desc.RemoveProjectRequest,
 ) (*desc.RemoveProjectResponse, error) {
 	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
+	opStatus := "failed"
+	defer func() {
+		prom.RemoveProjectCounterInc(opStatus)
+	}()
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -177,7 +185,7 @@ func (a *api) RemoveProject(
 		if err != nil {
 			log.Warn().Msgf("RemoveProject: logProducer.SendMessage(...) returns error: %v", err)
 		}
-		prom.GetRemoveProjectCounter().WithLabelValues("success").Inc()
+		opStatus = "success"
 	}
 
 	return response, nil
@@ -188,6 +196,10 @@ func (a *api) UpdateProject(
 	req *desc.UpdateProjectRequest,
 ) (*desc.UpdateProjectResponse, error) {
 	log.Info().Msgf("Got UpdateProjectRequest: {project_id: %d}", req.Project.Id)
+	opStatus := "failed"
+	defer func() {
+		prom.UpdateProjectCounterInc(opStatus)
+	}()
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -214,7 +226,7 @@ func (a *api) UpdateProject(
 		if err != nil {
 			log.Warn().Msgf("UpdateProject: logProducer.SendMessage(...) returns error: %v", err)
 		}
-		prom.GetUpdateProjectCounter().WithLabelValues("success").Inc()
+		opStatus = "success"
 	}
 
 	return response, nil
