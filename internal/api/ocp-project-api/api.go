@@ -93,7 +93,12 @@ func (a *api) CreateProject(
 	defer func() {
 		prom.CreateProjectCounterInc(opStatus)
 	}()
+
 	var err error
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -101,9 +106,8 @@ func (a *api) CreateProject(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	project := models.Project{
@@ -174,6 +178,10 @@ func (a *api) RemoveProject(
 	}()
 
 	var err error
+	if err = req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -181,9 +189,8 @@ func (a *api) RemoveProject(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err = req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
@@ -219,6 +226,10 @@ func (a *api) UpdateProject(
 	}()
 
 	var err error
+	if err = req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -226,9 +237,8 @@ func (a *api) UpdateProject(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err = req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	project := models.Project{

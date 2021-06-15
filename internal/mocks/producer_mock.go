@@ -34,6 +34,20 @@ func (m *MockProducer) EXPECT() *MockProducerMockRecorder {
 	return m.recorder
 }
 
+// IsAvailable mocks base method.
+func (m *MockProducer) IsAvailable() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsAvailable")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsAvailable indicates an expected call of IsAvailable.
+func (mr *MockProducerMockRecorder) IsAvailable() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockProducer)(nil).IsAvailable))
+}
+
 // SendMessage mocks base method.
 func (m *MockProducer) SendMessage(arg0 producer.EventMessage) error {
 	m.ctrl.T.Helper()

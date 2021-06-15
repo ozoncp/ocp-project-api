@@ -92,6 +92,7 @@ var _ = Describe("Api", func() {
 				WithArgs(createRequest.ProjectId, createRequest.UserId, createRequest.Link).
 				WillReturnRows(rows)
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
@@ -115,6 +116,7 @@ var _ = Describe("Api", func() {
 				WithArgs(createRequest.ProjectId, createRequest.UserId, createRequest.Link).
 				WillReturnRows(rows)
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
 
 			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
@@ -146,6 +148,7 @@ var _ = Describe("Api", func() {
 			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(createRequest.ProjectId, createRequest.UserId, createRequest.Link).
 				WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
 		})
@@ -170,6 +173,7 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.Id).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
@@ -195,6 +199,7 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.Id).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
 
 			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
@@ -219,6 +224,7 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.Link,
 					updateRequest.Repo.Id).
 				WillReturnResult(sqlmock.NewResult(0, 0))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
 		})
@@ -257,6 +263,7 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.Link,
 					updateRequest.Repo.Id).
 				WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			updateResponse, err = grpcApi.UpdateRepo(ctx, updateRequest)
 		})
@@ -334,6 +341,7 @@ var _ = Describe("Api", func() {
 			mock.ExpectExec("DELETE FROM repos").
 				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
@@ -354,6 +362,7 @@ var _ = Describe("Api", func() {
 			mock.ExpectExec("DELETE FROM repos").
 				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
@@ -373,6 +382,7 @@ var _ = Describe("Api", func() {
 
 			mock.ExpectExec("DELETE FROM repos").
 				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 0))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
 		})
@@ -404,6 +414,7 @@ var _ = Describe("Api", func() {
 
 			mock.ExpectExec("DELETE FROM repos").
 				WithArgs(removeRequest.RepoId).WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
 		})

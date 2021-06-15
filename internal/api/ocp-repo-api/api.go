@@ -98,6 +98,10 @@ func (a *api) CreateRepo(
 	}()
 
 	var err error
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -105,9 +109,8 @@ func (a *api) CreateRepo(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	repo := models.Repo{
@@ -181,6 +184,10 @@ func (a *api) RemoveRepo(
 	}()
 
 	var err error
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -188,9 +195,8 @@ func (a *api) RemoveRepo(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	removed, err := a.repoStorage.RemoveRepo(ctx, req.RepoId)
@@ -227,6 +233,10 @@ func (a *api) UpdateRepo(
 	}()
 
 	var err error
+	if err := req.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	if a.logProducer == nil {
 		a.logProducer, err = producer.NewProducer(ctx)
 		if err != nil {
@@ -234,9 +244,8 @@ func (a *api) UpdateRepo(
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
-
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if !a.logProducer.IsAvailable() {
+		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
 	project := models.Repo{
