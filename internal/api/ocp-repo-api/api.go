@@ -102,14 +102,8 @@ func (a *api) CreateRepo(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if a.logProducer == nil {
-		a.logProducer, err = producer.NewProducer(ctx)
-		if err != nil {
-			log.Error().Msgf("Something wrong with Kafka: %v", err)
-			return nil, status.Error(codes.Unavailable, err.Error())
-		}
-	}
 	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is onot available")
 		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
@@ -188,14 +182,8 @@ func (a *api) RemoveRepo(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if a.logProducer == nil {
-		a.logProducer, err = producer.NewProducer(ctx)
-		if err != nil {
-			log.Error().Msgf("Something wrong with Kafka: %v", err)
-			return nil, status.Error(codes.Unavailable, err.Error())
-		}
-	}
 	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is onot available")
 		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 
@@ -237,14 +225,8 @@ func (a *api) UpdateRepo(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if a.logProducer == nil {
-		a.logProducer, err = producer.NewProducer(ctx)
-		if err != nil {
-			log.Error().Msgf("Something wrong with Kafka: %v", err)
-			return nil, status.Error(codes.Unavailable, err.Error())
-		}
-	}
 	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is onot available")
 		return nil, status.Error(codes.Unavailable, "Kafka is not available")
 	}
 

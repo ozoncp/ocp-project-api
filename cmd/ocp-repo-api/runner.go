@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -46,7 +47,7 @@ func runGrpcAndGateway() error {
 	var logProducer producer.Producer
 	logProducer, err = producer.NewProducer(ctx)
 	if err != nil {
-		log.Error().Msgf("Kafka producer creation failed: %v", err)
+		return fmt.Errorf("Kafka producer creation failed: %v", err)
 	}
 
 	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))

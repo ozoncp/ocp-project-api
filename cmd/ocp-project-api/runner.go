@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -34,7 +35,7 @@ func runGrpcAndGateway() error {
 
 	db, err := sqlx.Connect("postgres", "user=lobanov dbname=ocp sslmode=disable")
 	if err != nil {
-		return err
+		return fmt.Errorf("connect to postgres error: %v", err)
 	}
 
 	projectStorage := storage.NewProjectStorage(db, chunkSize)
@@ -45,19 +46,18 @@ func runGrpcAndGateway() error {
 	var logProducer producer.Producer
 	logProducer, err = producer.NewProducer(ctx)
 	if err != nil {
-		log.Error().Msgf("Kafka producer creation failed: %v", err)
+		return fmt.Errorf("Kafka producer creation failed: %v", err)
 	}
 
 	desc.RegisterOcpProjectApiServer(grpcServer, projectApi.NewOcpProjectApi(projectStorage, logProducer))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Error().Msgf("Grpc server error: %v", err)
-		return err
+		return fmt.Errorf("initialization grpc server error: %v", err)
 	}
 
 	var group errgroup.Group
 	group.Go(func() error {
-		log.Info().Msg("Serving grpc requests...")
+		log.Info().Msgf("Serving grpc requests on %s", grpcPort)
 		return grpcServer.Serve(listen)
 	})
 
@@ -66,17 +66,15 @@ func runGrpcAndGateway() error {
 
 	group.Go(func() error {
 		if err := desc.RegisterOcpProjectApiHandlerFromEndpoint(ctx, gwmux, grpcPort, opts); err != nil {
-			log.Error().Msgf("Register gateway fails: %v", err)
-			return err
+			return fmt.Errorf("registering gateway failed: %v", err)
 		}
 
 		mux := http.NewServeMux()
 		mux.Handle("/", gwmux)
 
-		log.Info().Msgf("Http server listening on %s", httpPort)
+		log.Info().Msgf("Grpc gateway server listening on %s", httpPort)
 		if err = http.ListenAndServe(httpPort, mux); err != nil {
-			log.Error().Msgf("Gateway http server fails: %v", err)
-			return err
+			return fmt.Errorf("gateway http server failed: %v", err)
 		}
 
 		return nil
@@ -88,8 +86,7 @@ func runGrpcAndGateway() error {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Info().Msgf("Prom http listening on %s", promPort)
 		if err = http.ListenAndServe(promPort, nil); err != nil {
-			log.Error().Msgf("Prom http server fails: %v", err)
-			return err
+			return fmt.Errorf("prom http server failed: %v", err)
 		}
 		return nil
 	})
