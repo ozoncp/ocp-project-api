@@ -33,9 +33,10 @@ func NewRepoStorage(db *sqlx.DB, chunkSize int) RepoStorage {
 }
 
 type repoStorage struct {
-	mutex     sync.Mutex
-	db        *sqlx.DB
 	chunkSize int
+
+	mutex sync.Mutex
+	db    *sqlx.DB
 }
 
 func (ps *repoStorage) AddRepo(ctx context.Context, repo models.Repo) (uint64, error) {
@@ -77,15 +78,18 @@ func (ps *repoStorage) MultiAddRepo(ctx context.Context, repos []models.Repo) (i
 		return 0, err
 	}
 
+	ps.mutex.Lock()
 	if err := ps.db.Ping(); err != nil {
 		var db *sqlx.DB
 		db, err = ConnectDB()
 		if err != nil {
+			ps.mutex.Unlock()
 			return 0, err
 		}
 		log.Info().Msg("Successful reconnect to db")
 		ps.db = db
 	}
+	ps.mutex.Unlock()
 
 	var rowsAffected int64
 
