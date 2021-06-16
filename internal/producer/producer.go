@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/Shopify/sarama"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,20 +16,13 @@ type Producer interface {
 	SendMessage(msg EventMessage) error
 }
 
-const (
-	capacity = 256
-	topic    = "events"
-)
-
-var brokers = []string{"127.0.0.1:9094"}
-
 func NewProducer(ctx context.Context) (Producer, error) {
-	config := sarama.NewConfig()
-	config.Producer.Partitioner = sarama.NewHashPartitioner
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Return.Successes = true
+	saramaConfig := sarama.NewConfig()
+	saramaConfig.Producer.Partitioner = sarama.NewHashPartitioner
+	saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
+	saramaConfig.Producer.Return.Successes = true
 
-	saramaClient, err := sarama.NewClient(brokers, config)
+	saramaClient, err := sarama.NewClient(config.Global.Producer.Brokers, saramaConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +32,14 @@ func NewProducer(ctx context.Context) (Producer, error) {
 		return nil, err
 	}
 
-	messages := make(chan *sarama.ProducerMessage, capacity)
-	pr := &logProducer{producer: producer, topic: topic, messages: messages, client: saramaClient, isAvailable: true}
+	messages := make(chan *sarama.ProducerMessage, config.Global.Producer.Capacity)
+	pr := &logProducer{
+		producer:    producer,
+		topic:       config.Global.Producer.EventsTopic,
+		messages:    messages,
+		client:      saramaClient,
+		isAvailable: true,
+	}
 	go pr.handleMessages(ctx)
 
 	return pr, nil
@@ -96,7 +96,7 @@ func (pr *logProducer) IsAvailable() bool {
 	defer pr.mutex.Unlock()
 
 	msg := &sarama.ProducerMessage{
-		Topic:     "ping",
+		Topic:     config.Global.Producer.PingTopic,
 		Partition: -1,
 		Value:     sarama.StringEncoder("{}"),
 	}

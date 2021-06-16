@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ozoncp/ocp-project-api/internal/api/checker"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/prom"
@@ -29,8 +30,8 @@ func (a *api) ListRepos(
 ) (*desc.ListReposResponse, error) {
 	log.Info().Msgf("Got ListRepoRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	repos, err := a.repoStorage.ListRepos(ctx, req.Limit, req.Offset)
@@ -64,8 +65,8 @@ func (a *api) DescribeRepo(
 ) (*desc.DescribeRepoResponse, error) {
 	log.Info().Msgf("Got DescribeRepoRequest: {repo_id: %d}", req.RepoId)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	repo, err := a.repoStorage.DescribeRepo(ctx, req.RepoId)
@@ -98,13 +99,8 @@ func (a *api) CreateRepo(
 	}()
 
 	var err error
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	repo := models.Repo{
@@ -140,8 +136,8 @@ func (a *api) MultiCreateRepo(
 ) (*desc.MultiCreateRepoResponse, error) {
 	log.Info().Msgf("Got MultiCreateRepoRequest: {repos count: %d}", len(req.Repos))
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	repos := make([]models.Repo, 0, len(req.Repos))
@@ -178,13 +174,8 @@ func (a *api) RemoveRepo(
 	}()
 
 	var err error
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	removed, err := a.repoStorage.RemoveRepo(ctx, req.RepoId)
@@ -221,13 +212,8 @@ func (a *api) UpdateRepo(
 	}()
 
 	var err error
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	project := models.Repo{
@@ -256,6 +242,19 @@ func (a *api) UpdateRepo(
 	}
 
 	return response, nil
+}
+
+func (a *api) checkRequestAndProducer(req checker.Validator) error {
+	if err := checker.CheckRequest(req); err != nil {
+		return err
+	}
+
+	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is not available")
+		return status.Error(codes.Unavailable, "Kafka is not available")
+	}
+
+	return nil
 }
 
 func NewOcpRepoApi(repoStorage storage.RepoStorage, logProducer producer.Producer) desc.OcpRepoApiServer {

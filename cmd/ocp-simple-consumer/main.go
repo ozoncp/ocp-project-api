@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/Shopify/sarama"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/rs/zerolog/log"
 )
@@ -40,15 +42,13 @@ func messageReceived(message *sarama.ConsumerMessage) {
 	log.Info().Msgf("Got message: %v", msg.Body)
 }
 
-var brokers = []string{"127.0.0.1:9094"}
-
 func main() {
-	consumer, err := sarama.NewConsumer(brokers, nil)
+	consumer, err := sarama.NewConsumer(config.Global.Producer.Brokers, nil)
 	if err != nil {
 		log.Fatal().Msgf("NewConsumer error: %v", err)
 	}
 
-	err = subscribe("events", consumer)
+	err = subscribe(config.Global.Producer.EventsTopic, consumer)
 	if err != nil {
 		log.Fatal().Msgf("Subscribe failed: %v", err)
 	}

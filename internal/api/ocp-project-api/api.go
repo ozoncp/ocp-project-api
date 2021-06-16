@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ozoncp/ocp-project-api/internal/api/checker"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/prom"
@@ -29,8 +30,8 @@ func (a *api) ListProjects(
 ) (*desc.ListProjectsResponse, error) {
 	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	projects, err := a.projectStorage.ListProjects(ctx, req.Limit, req.Offset)
@@ -63,8 +64,8 @@ func (a *api) DescribeProject(
 ) (*desc.DescribeProjectResponse, error) {
 	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	project, err := a.projectStorage.DescribeProject(ctx, req.ProjectId)
@@ -95,13 +96,8 @@ func (a *api) CreateProject(
 	}()
 
 	var err error
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	project := models.Project{
@@ -135,8 +131,8 @@ func (a *api) MultiCreateProject(
 ) (*desc.MultiCreateProjectResponse, error) {
 	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	projects := make([]models.Project, 0, len(req.Projects))
@@ -172,13 +168,8 @@ func (a *api) RemoveProject(
 	}()
 
 	var err error
-	if err = req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
@@ -214,13 +205,8 @@ func (a *api) UpdateProject(
 	}()
 
 	var err error
-	if err = req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if !a.logProducer.IsAvailable() {
-		log.Error().Msg("Kafka is onot available")
-		return nil, status.Error(codes.Unavailable, "Kafka is not available")
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	project := models.Project{
@@ -248,6 +234,19 @@ func (a *api) UpdateProject(
 	}
 
 	return response, nil
+}
+
+func (a *api) checkRequestAndProducer(req checker.Validator) error {
+	if err := checker.CheckRequest(req); err != nil {
+		return err
+	}
+
+	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is not available")
+		return status.Error(codes.Unavailable, "Kafka is not available")
+	}
+
+	return nil
 }
 
 func NewOcpProjectApi(projectStorage storage.ProjectStorage, logProducer producer.Producer) desc.OcpProjectApiServer {
