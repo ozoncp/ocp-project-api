@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"unsafe"
 
 	"github.com/Masterminds/squirrel"
@@ -11,6 +12,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -31,8 +33,10 @@ func NewProjectStorage(db *sqlx.DB, chunkSize int) ProjectStorage {
 }
 
 type projectStorage struct {
-	db        *sqlx.DB
 	chunkSize int
+
+	mutex sync.Mutex
+	db    *sqlx.DB
 }
 
 func (ps *projectStorage) AddProject(ctx context.Context, project models.Project) (uint64, error) {
@@ -42,6 +46,19 @@ func (ps *projectStorage) AddProject(ctx context.Context, project models.Project
 		Suffix("RETURNING \"id\"").
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return 0, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	err := query.QueryRowContext(ctx).Scan(&project.Id)
 	if err != nil {
@@ -60,6 +77,19 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 	if err != nil {
 		return 0, err
 	}
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return 0, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	var rowsAffected int64
 
@@ -111,6 +141,19 @@ func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return false, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
+
 	result, err := query.ExecContext(ctx)
 	if err != nil {
 		return false, err
@@ -127,6 +170,19 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return nil, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	// just for trying this method
 	sqlString, args, err := query.ToSql()
@@ -149,6 +205,19 @@ func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64
 		Limit(limit).
 		Offset(offset).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return nil, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
@@ -174,6 +243,19 @@ func (ps *projectStorage) UpdateProject(ctx context.Context, project models.Proj
 		Where(squirrel.Eq{"id": project.Id}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return false, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {

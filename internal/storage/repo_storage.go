@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"unsafe"
 
 	"github.com/Masterminds/squirrel"
@@ -11,6 +12,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -31,6 +33,7 @@ func NewRepoStorage(db *sqlx.DB, chunkSize int) RepoStorage {
 }
 
 type repoStorage struct {
+	mutex     sync.Mutex
 	db        *sqlx.DB
 	chunkSize int
 }
@@ -42,6 +45,19 @@ func (ps *repoStorage) AddRepo(ctx context.Context, repo models.Repo) (uint64, e
 		Suffix("RETURNING \"id\"").
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return 0, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	err := query.QueryRowContext(ctx).Scan(&repo.Id)
 	if err != nil {
@@ -59,6 +75,16 @@ func (ps *repoStorage) MultiAddRepo(ctx context.Context, repos []models.Repo) (i
 	repoBulks, err := utils.ReposSplitToBulks(repos, ps.chunkSize)
 	if err != nil {
 		return 0, err
+	}
+
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			return 0, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
 	}
 
 	var rowsAffected int64
@@ -111,6 +137,19 @@ func (ps *repoStorage) RemoveRepo(ctx context.Context, repoId uint64) (bool, err
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return false, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
+
 	result, err := query.ExecContext(ctx)
 	if err != nil {
 		return false, err
@@ -127,6 +166,19 @@ func (ps *repoStorage) DescribeRepo(ctx context.Context, repoId uint64) (*models
 		Where(squirrel.Eq{"id": repoId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return nil, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	// just for trying this method
 	sqlString, args, err := query.ToSql()
@@ -149,6 +201,19 @@ func (ps *repoStorage) ListRepos(ctx context.Context, limit, offset uint64) ([]m
 		Limit(limit).
 		Offset(offset).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return nil, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
@@ -175,6 +240,19 @@ func (ps *repoStorage) UpdateRepo(ctx context.Context, repo models.Repo) (bool, 
 		Where(squirrel.Eq{"id": repo.Id}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	ps.mutex.Lock()
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			ps.mutex.Unlock()
+			return false, err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	ps.mutex.Unlock()
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {

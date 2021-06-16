@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-project-api"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
@@ -33,9 +32,9 @@ func runGrpcAndGateway() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	db, err := sqlx.Connect("postgres", "user=lobanov dbname=ocp sslmode=disable")
+	db, err := storage.OpenDB()
 	if err != nil {
-		return fmt.Errorf("connect to postgres error: %v", err)
+		return fmt.Errorf("connect to db error: %v", err)
 	}
 
 	projectStorage := storage.NewProjectStorage(db, chunkSize)

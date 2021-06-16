@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	repoApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
@@ -34,9 +33,9 @@ func runGrpcAndGateway() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	db, err := sqlx.Connect("postgres", "user=lobanov dbname=ocp sslmode=disable")
+	db, err := storage.OpenDB()
 	if err != nil {
-		return err
+		return fmt.Errorf("connect to db error: %v", err)
 	}
 
 	repoStorage := storage.NewRepoStorage(db, chunkSize)
@@ -53,13 +52,12 @@ func runGrpcAndGateway() error {
 	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Error().Msgf("Grpc server error: %v", err)
-		return err
+		return fmt.Errorf("initialization grpc server error: %v", err)
 	}
 
 	var group errgroup.Group
 	group.Go(func() error {
-		log.Info().Msg("Serving grpc requests...")
+		log.Info().Msgf("Serving grpc requests on %s", grpcPort)
 		return grpcServer.Serve(listen)
 	})
 
@@ -68,8 +66,7 @@ func runGrpcAndGateway() error {
 
 	group.Go(func() error {
 		if err := desc.RegisterOcpRepoApiHandlerFromEndpoint(ctx, gwmux, grpcPort, opts); err != nil {
-			log.Error().Msgf("Register gateway fails: %v", err)
-			return err
+			return fmt.Errorf("registering gateway failed: %v", err)
 		}
 
 		mux := http.NewServeMux()
@@ -77,8 +74,7 @@ func runGrpcAndGateway() error {
 
 		log.Info().Msgf("Http server listening on %s", httpPort)
 		if err = http.ListenAndServe(httpPort, mux); err != nil {
-			log.Error().Msgf("Gateway http server fails: %v", err)
-			return err
+			return fmt.Errorf("gateway http server failed: %v", err)
 		}
 
 		return nil
@@ -90,8 +86,7 @@ func runGrpcAndGateway() error {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Info().Msgf("Prom http listening on %s", promPort)
 		if err = http.ListenAndServe(promPort, nil); err != nil {
-			log.Error().Msgf("Prom http server fails: %v", err)
-			return err
+			return fmt.Errorf("prom http server failed: %v", err)
 		}
 		return nil
 	})
