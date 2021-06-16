@@ -3,10 +3,16 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"sync"
+	"unsafe"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -19,6 +25,7 @@ type RepoStorage interface {
 	RemoveRepo(ctx context.Context, repoId uint64) (bool, error)
 	DescribeRepo(ctx context.Context, repoId uint64) (*models.Repo, error)
 	ListRepos(ctx context.Context, limit, offset uint64) ([]models.Repo, error)
+	UpdateRepo(ctx context.Context, repo models.Repo) (bool, error)
 }
 
 func NewRepoStorage(db *sqlx.DB, chunkSize int) RepoStorage {
@@ -26,8 +33,10 @@ func NewRepoStorage(db *sqlx.DB, chunkSize int) RepoStorage {
 }
 
 type repoStorage struct {
-	db        *sqlx.DB
 	chunkSize int
+
+	mutex sync.Mutex
+	db    *sqlx.DB
 }
 
 func (ps *repoStorage) AddRepo(ctx context.Context, repo models.Repo) (uint64, error) {
@@ -38,6 +47,10 @@ func (ps *repoStorage) AddRepo(ctx context.Context, repo models.Repo) (uint64, e
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
+	if err := ps.keepAliveDB(); err != nil {
+		return 0, err
+	}
+
 	err := query.QueryRowContext(ctx).Scan(&repo.Id)
 	if err != nil {
 		return 0, err
@@ -47,37 +60,58 @@ func (ps *repoStorage) AddRepo(ctx context.Context, repo models.Repo) (uint64, e
 }
 
 func (ps *repoStorage) MultiAddRepo(ctx context.Context, repos []models.Repo) (int64, error) {
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiAddRepo global")
+	defer span.Finish()
+
 	repoBulks, err := utils.ReposSplitToBulks(repos, ps.chunkSize)
 	if err != nil {
 		return 0, err
 	}
 
+	if err := ps.keepAliveDB(); err != nil {
+		return 0, err
+	}
+
 	var rowsAffected int64
 
-	for _, bulk := range repoBulks {
-		query := squirrel.Insert(repoTableName).
-			Columns("project_id", "user_id", "link").
-			RunWith(ps.db).
-			PlaceholderFormat(squirrel.Dollar)
+	for index, bulk := range repoBulks {
+		err = func() error {
+			// Create a Child Span. Note that we're using the ChildOf option.
+			childSpan := tracer.StartSpan(
+				fmt.Sprintf("MultiAddRepo for bulk %d, count of bytes: %d", index, len(bulk)*int(unsafe.Sizeof(models.Repo{}))),
+				opentracing.ChildOf(span.Context()),
+			)
+			defer childSpan.Finish()
 
-		for _, rep := range bulk {
-			query = query.Values(rep.ProjectId, rep.UserId, rep.Link)
-		}
+			query := squirrel.Insert(repoTableName).
+				Columns("project_id", "user_id", "link").
+				RunWith(ps.db).
+				PlaceholderFormat(squirrel.Dollar)
 
-		var result sql.Result
-		result, err = query.ExecContext(ctx)
+			for _, rep := range bulk {
+				query = query.Values(rep.ProjectId, rep.UserId, rep.Link)
+			}
+
+			var result sql.Result
+			result, err = query.ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			var cnt int64
+			cnt, err = result.RowsAffected()
+			if err != nil {
+				// so RowsAffected() not supported
+				cnt = 0
+			}
+			rowsAffected = rowsAffected + cnt
+
+			return nil
+		}()
 		if err != nil {
 			return rowsAffected, err
 		}
-
-		var cnt int64
-		cnt, err = result.RowsAffected()
-		if err != nil {
-			// so RowsAffected() not supported
-			cnt = 0
-		}
-		rowsAffected = rowsAffected + cnt
-
 	}
 	// we might get error from RowsAffected()
 	return rowsAffected, err
@@ -88,6 +122,10 @@ func (ps *repoStorage) RemoveRepo(ctx context.Context, repoId uint64) (bool, err
 		Where(squirrel.Eq{"id": repoId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return false, err
+	}
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {
@@ -105,6 +143,10 @@ func (ps *repoStorage) DescribeRepo(ctx context.Context, repoId uint64) (*models
 		Where(squirrel.Eq{"id": repoId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return nil, err
+	}
 
 	// just for trying this method
 	sqlString, args, err := query.ToSql()
@@ -128,6 +170,10 @@ func (ps *repoStorage) ListRepos(ctx context.Context, limit, offset uint64) ([]m
 		Offset(offset).
 		PlaceholderFormat(squirrel.Dollar)
 
+	if err := ps.keepAliveDB(); err != nil {
+		return nil, err
+	}
+
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
 		return nil, err
@@ -143,4 +189,43 @@ func (ps *repoStorage) ListRepos(ctx context.Context, limit, offset uint64) ([]m
 		multiRepos = append(multiRepos, repo)
 	}
 	return multiRepos, nil
+}
+
+func (ps *repoStorage) UpdateRepo(ctx context.Context, repo models.Repo) (bool, error) {
+	query := squirrel.Update(repoTableName).
+		Set("project_id", repo.ProjectId).
+		Set("user_id", repo.UserId).
+		Set("link", repo.Link).
+		Where(squirrel.Eq{"id": repo.Id}).
+		RunWith(ps.db).
+		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return false, err
+	}
+
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt != 0, err
+}
+
+func (ps *repoStorage) keepAliveDB() error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
+
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			return err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	return nil
 }

@@ -3,10 +3,16 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"sync"
+	"unsafe"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -19,6 +25,7 @@ type ProjectStorage interface {
 	RemoveProject(ctx context.Context, projectId uint64) (bool, error)
 	DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error)
 	ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error)
+	UpdateProject(ctx context.Context, project models.Project) (bool, error)
 }
 
 func NewProjectStorage(db *sqlx.DB, chunkSize int) ProjectStorage {
@@ -26,8 +33,10 @@ func NewProjectStorage(db *sqlx.DB, chunkSize int) ProjectStorage {
 }
 
 type projectStorage struct {
-	db        *sqlx.DB
 	chunkSize int
+
+	mutex sync.Mutex
+	db    *sqlx.DB
 }
 
 func (ps *projectStorage) AddProject(ctx context.Context, project models.Project) (uint64, error) {
@@ -38,6 +47,10 @@ func (ps *projectStorage) AddProject(ctx context.Context, project models.Project
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
+	if err := ps.keepAliveDB(); err != nil {
+		return 0, err
+	}
+
 	err := query.QueryRowContext(ctx).Scan(&project.Id)
 	if err != nil {
 		return 0, err
@@ -47,37 +60,58 @@ func (ps *projectStorage) AddProject(ctx context.Context, project models.Project
 }
 
 func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models.Project) (int64, error) {
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiAddProject global")
+	defer span.Finish()
+
 	projectBulks, err := utils.ProjectsSplitToBulks(projects, ps.chunkSize)
 	if err != nil {
 		return 0, err
 	}
 
+	if err := ps.keepAliveDB(); err != nil {
+		return 0, err
+	}
+
 	var rowsAffected int64
 
-	for _, bulk := range projectBulks {
-		query := squirrel.Insert(projectTableName).
-			Columns("course_id", "name").
-			RunWith(ps.db).
-			PlaceholderFormat(squirrel.Dollar)
+	for index, bulk := range projectBulks {
+		err = func() error {
+			// Create a Child Span. Note that we're using the ChildOf option.
+			childSpan := tracer.StartSpan(
+				fmt.Sprintf("MultiAddProject for bulk %d, count of bytes: %d", index, len(bulk)*int(unsafe.Sizeof(models.Project{}))),
+				opentracing.ChildOf(span.Context()),
+			)
+			defer childSpan.Finish()
 
-		for _, proj := range bulk {
-			query = query.Values(proj.CourseId, proj.Name)
-		}
+			query := squirrel.Insert(projectTableName).
+				Columns("course_id", "name").
+				RunWith(ps.db).
+				PlaceholderFormat(squirrel.Dollar)
 
-		var result sql.Result
-		result, err = query.ExecContext(ctx)
+			for _, proj := range bulk {
+				query = query.Values(proj.CourseId, proj.Name)
+			}
+
+			var result sql.Result
+			result, err = query.ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			var cnt int64
+			cnt, err = result.RowsAffected()
+			if err != nil {
+				// so RowsAffected() not supported
+				cnt = 0
+			}
+			rowsAffected = rowsAffected + cnt
+			return nil
+		}()
+
 		if err != nil {
 			return rowsAffected, err
 		}
-
-		var cnt int64
-		cnt, err = result.RowsAffected()
-		if err != nil {
-			// so RowsAffected() not supported
-			cnt = 0
-		}
-		rowsAffected = rowsAffected + cnt
-
 	}
 	// we might get error from RowsAffected()
 	return rowsAffected, err
@@ -88,6 +122,10 @@ func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return false, err
+	}
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {
@@ -105,6 +143,10 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 		Where(squirrel.Eq{"id": projectId}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return nil, err
+	}
 
 	// just for trying this method
 	sqlString, args, err := query.ToSql()
@@ -128,6 +170,10 @@ func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64
 		Offset(offset).
 		PlaceholderFormat(squirrel.Dollar)
 
+	if err := ps.keepAliveDB(); err != nil {
+		return nil, err
+	}
+
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
 		return nil, err
@@ -143,4 +189,42 @@ func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64
 		multiProjects = append(multiProjects, project)
 	}
 	return multiProjects, nil
+}
+
+func (ps *projectStorage) UpdateProject(ctx context.Context, project models.Project) (bool, error) {
+	query := squirrel.Update(projectTableName).
+		Set("course_id", project.CourseId).
+		Set("name", project.Name).
+		Where(squirrel.Eq{"id": project.Id}).
+		RunWith(ps.db).
+		PlaceholderFormat(squirrel.Dollar)
+
+	if err := ps.keepAliveDB(); err != nil {
+		return false, err
+	}
+
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var cnt int64
+	cnt, err = result.RowsAffected()
+	return cnt != 0, err
+}
+
+func (ps *projectStorage) keepAliveDB() error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
+
+	if err := ps.db.Ping(); err != nil {
+		var db *sqlx.DB
+		db, err = ConnectDB()
+		if err != nil {
+			return err
+		}
+		log.Info().Msg("Successful reconnect to db")
+		ps.db = db
+	}
+	return nil
 }

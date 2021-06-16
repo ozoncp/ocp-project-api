@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-project-api"
+	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	desc "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
@@ -17,7 +20,8 @@ import (
 
 var _ = Describe("Api", func() {
 	var (
-		ctx context.Context
+		ctx  context.Context
+		ctrl *gomock.Controller
 
 		db     *sql.DB
 		sqlxDB *sqlx.DB
@@ -28,11 +32,15 @@ var _ = Describe("Api", func() {
 			{Id: 2, CourseId: 2, Name: "2"},
 		}
 
+		logProducer    *mocks.MockProducer
 		projectStorage storage.ProjectStorage
 		grpcApi        desc.OcpProjectApiServer
 
 		createRequest  *desc.CreateProjectRequest
 		createResponse *desc.CreateProjectResponse
+
+		updateRequest  *desc.UpdateProjectRequest
+		updateResponse *desc.UpdateProjectResponse
 
 		describeRequest  *desc.DescribeProjectRequest
 		describeResponse *desc.DescribeProjectResponse
@@ -50,6 +58,7 @@ var _ = Describe("Api", func() {
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
+		ctrl = gomock.NewController(GinkgoT())
 
 		db, mock, err = sqlmock.New()
 		Expect(err).Should(BeNil())
@@ -57,7 +66,9 @@ var _ = Describe("Api", func() {
 		sqlxDB = sqlx.NewDb(db, "sqlmock")
 
 		projectStorage = storage.NewProjectStorage(sqlxDB, 2)
-		grpcApi = projectApi.NewOcpProjectApi(projectStorage)
+
+		logProducer = mocks.NewMockProducer(ctrl)
+		grpcApi = projectApi.NewOcpProjectApi(projectStorage, logProducer)
 	})
 
 	JustBeforeEach(func() {
@@ -67,6 +78,7 @@ var _ = Describe("Api", func() {
 		mock.ExpectClose()
 		err = db.Close()
 		Expect(err).Should(BeNil())
+		ctrl.Finish()
 	})
 
 	Context("create project simple", func() {
@@ -80,6 +92,33 @@ var _ = Describe("Api", func() {
 			mock.ExpectQuery("INSERT INTO projects").
 				WithArgs(createRequest.CourseId, createRequest.Name).
 				WillReturnRows(rows)
+
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
+
+			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(createResponse.ProjectId).Should(Equal(projectId))
+		})
+	})
+
+	Context("create project: producer error", func() {
+		var projectId uint64 = 1
+
+		BeforeEach(func() {
+			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
+
+			rows := sqlmock.NewRows([]string{"id"}).
+				AddRow(projectId)
+			mock.ExpectQuery("INSERT INTO projects").
+				WithArgs(createRequest.CourseId, createRequest.Name).
+				WillReturnRows(rows)
+
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
 
 			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
 		})
@@ -111,12 +150,112 @@ var _ = Describe("Api", func() {
 				WithArgs(createRequest.CourseId, createRequest.Name).
 				WillReturnError(errors.New("i am bad database"))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
 			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
 		})
 
 		It("", func() {
 			Expect(err).ShouldNot(BeNil())
 			Expect(createResponse).Should(BeNil())
+		})
+	})
+
+	Context("update project simple", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateProjectRequest{
+				Project: &desc.Project{Id: 1, CourseId: 1, Name: "1"},
+			}
+
+			mock.ExpectExec("UPDATE projects SET").
+				WithArgs(updateRequest.Project.CourseId, updateRequest.Project.Name, updateRequest.Project.Id).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
+
+			updateResponse, err = grpcApi.UpdateProject(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(true))
+		})
+	})
+
+	Context("update project: producer error", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateProjectRequest{
+				Project: &desc.Project{Id: 1, CourseId: 1, Name: "1"},
+			}
+
+			mock.ExpectExec("UPDATE projects SET").
+				WithArgs(updateRequest.Project.CourseId, updateRequest.Project.Name, updateRequest.Project.Id).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
+
+			updateResponse, err = grpcApi.UpdateProject(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(true))
+		})
+	})
+
+	Context("update project: not updated", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateProjectRequest{
+				Project: &desc.Project{Id: 1, CourseId: 1, Name: "1"},
+			}
+
+			mock.ExpectExec("UPDATE projects SET").
+				WithArgs(updateRequest.Project.CourseId, updateRequest.Project.Name, updateRequest.Project.Id).
+				WillReturnResult(sqlmock.NewResult(0, 0))
+			logProducer.EXPECT().IsAvailable().Return(true)
+
+			updateResponse, err = grpcApi.UpdateProject(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(updateResponse.Found).Should(Equal(false))
+		})
+	})
+
+	Context("update project: invalid argument", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateProjectRequest{
+				Project: &desc.Project{Id: 0, CourseId: 0, Name: "1"},
+			}
+
+			updateResponse, err = grpcApi.UpdateProject(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(updateResponse).Should(BeNil())
+		})
+	})
+
+	Context("update project: sql query returns error", func() {
+		BeforeEach(func() {
+			updateRequest = &desc.UpdateProjectRequest{
+				Project: &desc.Project{Id: 1, CourseId: 1, Name: "1"},
+			}
+
+			mock.ExpectExec("UPDATE projects SET").
+				WithArgs(updateRequest.Project.CourseId, updateRequest.Project.Name, updateRequest.Project.Id).
+				WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
+
+			updateResponse, err = grpcApi.UpdateProject(ctx, updateRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(updateResponse).Should(BeNil())
 		})
 	})
 
@@ -185,6 +324,9 @@ var _ = Describe("Api", func() {
 			mock.ExpectExec("DELETE FROM projects").
 				WithArgs(removeRequest.ProjectId).WillReturnResult(sqlmock.NewResult(0, 1))
 
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
+
 			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
 		})
 
@@ -193,6 +335,28 @@ var _ = Describe("Api", func() {
 			Expect(removeResponse.Found).Should(Equal(true))
 		})
 	})
+
+	Context("remove project: producer error", func() {
+		var projectId uint64 = 1
+
+		BeforeEach(func() {
+			removeRequest = &desc.RemoveProjectRequest{ProjectId: projectId}
+
+			mock.ExpectExec("DELETE FROM projects").
+				WithArgs(removeRequest.ProjectId).WillReturnResult(sqlmock.NewResult(0, 1))
+
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
+
+			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(removeResponse.Found).Should(Equal(true))
+		})
+	})
+
 	Context("remove project: not found", func() {
 		var projectId uint64 = 1
 
@@ -201,6 +365,7 @@ var _ = Describe("Api", func() {
 
 			mock.ExpectExec("DELETE FROM projects").
 				WithArgs(removeRequest.ProjectId).WillReturnResult(sqlmock.NewResult(0, 0))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
 		})
@@ -232,6 +397,7 @@ var _ = Describe("Api", func() {
 
 			mock.ExpectExec("DELETE FROM projects").
 				WithArgs(removeRequest.ProjectId).WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveProject(ctx, removeRequest)
 		})
@@ -364,7 +530,7 @@ var _ = Describe("Api", func() {
 	Context("multi create project: split to bulks", func() {
 		BeforeEach(func() {
 			projectStorage = storage.NewProjectStorage(sqlxDB, 1)
-			grpcApi = projectApi.NewOcpProjectApi(projectStorage)
+			grpcApi = projectApi.NewOcpProjectApi(projectStorage, logProducer)
 
 			multiCreateRequest = &desc.MultiCreateProjectRequest{
 				Projects: []*desc.NewProject{

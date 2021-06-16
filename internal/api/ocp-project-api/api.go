@@ -3,7 +3,12 @@ package ocp_project_api
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/ozoncp/ocp-project-api/internal/api/checker"
 	"github.com/ozoncp/ocp-project-api/internal/models"
+	"github.com/ozoncp/ocp-project-api/internal/producer"
+	"github.com/ozoncp/ocp-project-api/internal/prom"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
 	"github.com/rs/zerolog/log"
 
@@ -16,6 +21,7 @@ import (
 type api struct {
 	desc.UnimplementedOcpProjectApiServer
 	projectStorage storage.ProjectStorage
+	logProducer    producer.Producer
 }
 
 func (a *api) ListProjects(
@@ -24,8 +30,8 @@ func (a *api) ListProjects(
 ) (*desc.ListProjectsResponse, error) {
 	log.Info().Msgf("Got ListProjectRequest: {limit: %d, offset: %d}", req.Limit, req.Offset)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	projects, err := a.projectStorage.ListProjects(ctx, req.Limit, req.Offset)
@@ -58,8 +64,8 @@ func (a *api) DescribeProject(
 ) (*desc.DescribeProjectResponse, error) {
 	log.Info().Msgf("Got DescribeProjectRequest: {project_id: %d}", req.ProjectId)
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	project, err := a.projectStorage.DescribeProject(ctx, req.ProjectId)
@@ -84,9 +90,14 @@ func (a *api) CreateProject(
 	req *desc.CreateProjectRequest,
 ) (*desc.CreateProjectResponse, error) {
 	log.Info().Msgf("Got CreateProjectRequest: {course_id: %d, name: %s}", req.CourseId, req.Name)
+	opStatus := "failed"
+	defer func() {
+		prom.CreateProjectCounterInc(opStatus)
+	}()
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	var err error
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	project := models.Project{
@@ -97,13 +108,20 @@ func (a *api) CreateProject(
 	id, err := a.projectStorage.AddProject(ctx, project)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.CreateProjectResponse{
 		ProjectId: id,
 	}
 
+	err = a.logProducer.SendMessage(
+		producer.CreateProjectEventMessage(producer.Created, id, time.Now()))
+	if err != nil {
+		log.Warn().Msgf("CreateProject: logProducer.SendMessage(...) returns error: %v", err)
+	}
+
+	opStatus = "success"
 	return response, nil
 }
 
@@ -113,8 +131,8 @@ func (a *api) MultiCreateProject(
 ) (*desc.MultiCreateProjectResponse, error) {
 	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := checker.CheckRequest(req); err != nil {
+		return nil, err
 	}
 
 	projects := make([]models.Project, 0, len(req.Projects))
@@ -129,7 +147,7 @@ func (a *api) MultiCreateProject(
 	cnt, err := a.projectStorage.MultiAddProject(ctx, projects)
 	if err != nil {
 		log.Error().Msgf("projectStorage.CreateProject() returns error: %v, count of created: %d", err, cnt)
-		return nil, status.Error(codes.NotFound, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
 	}
 
 	response := &desc.MultiCreateProjectResponse{
@@ -144,24 +162,93 @@ func (a *api) RemoveProject(
 	req *desc.RemoveProjectRequest,
 ) (*desc.RemoveProjectResponse, error) {
 	log.Info().Msgf("Got RemoveProjectRequest: {project_id: %d}", req.ProjectId)
+	opStatus := "failed"
+	defer func() {
+		prom.RemoveProjectCounterInc(opStatus)
+	}()
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	var err error
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
 	}
 
 	removed, err := a.projectStorage.RemoveProject(ctx, req.ProjectId)
 	if err != nil {
 		log.Error().Msgf("projectStorage.RemoveProject() returns error: %v", err)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	response := &desc.RemoveProjectResponse{
 		Found: removed,
 	}
 
+	if removed {
+		err = a.logProducer.SendMessage(
+			producer.CreateProjectEventMessage(producer.Removed, req.ProjectId, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("RemoveProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+		opStatus = "success"
+	}
+
 	return response, nil
 }
 
-func NewOcpProjectApi(projectStorage storage.ProjectStorage) desc.OcpProjectApiServer {
-	return &api{projectStorage: projectStorage}
+func (a *api) UpdateProject(
+	ctx context.Context,
+	req *desc.UpdateProjectRequest,
+) (*desc.UpdateProjectResponse, error) {
+	log.Info().Msgf("Got UpdateProjectRequest: {project_id: %d}", req.Project.Id)
+	opStatus := "failed"
+	defer func() {
+		prom.UpdateProjectCounterInc(opStatus)
+	}()
+
+	var err error
+	if err := a.checkRequestAndProducer(req); err != nil {
+		return nil, err
+	}
+
+	project := models.Project{
+		Id:       req.Project.Id,
+		CourseId: req.Project.CourseId,
+		Name:     req.Project.Name,
+	}
+	updated, err := a.projectStorage.UpdateProject(ctx, project)
+	if err != nil {
+		log.Error().Msgf("projectStorage.UpdateProject() returns error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	response := &desc.UpdateProjectResponse{
+		Found: updated,
+	}
+
+	if updated {
+		err = a.logProducer.SendMessage(
+			producer.CreateProjectEventMessage(producer.Updated, req.Project.Id, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("UpdateProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+		opStatus = "success"
+	}
+
+	return response, nil
+}
+
+func (a *api) checkRequestAndProducer(req checker.Validator) error {
+	if err := checker.CheckRequest(req); err != nil {
+		return err
+	}
+
+	if !a.logProducer.IsAvailable() {
+		log.Error().Msg("Kafka is not available")
+		return status.Error(codes.Unavailable, "Kafka is not available")
+	}
+
+	return nil
+}
+
+func NewOcpProjectApi(projectStorage storage.ProjectStorage, logProducer producer.Producer) desc.OcpProjectApiServer {
+	return &api{projectStorage: projectStorage, logProducer: logProducer}
 }

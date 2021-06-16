@@ -13,13 +13,13 @@
   "paths": {
     "/repos": {
       "post": {
-        "summary": "Create new repos",
-        "operationId": "OcpRepoApi_MultiCreateRepo",
+        "summary": "Update repo",
+        "operationId": "OcpRepoApi_UpdateRepo",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiMultiCreateRepoResponse"
+              "$ref": "#/definitions/apiUpdateRepoResponse"
             }
           },
           "default": {
@@ -219,6 +219,14 @@
         }
       },
       "title": "Repo description"
+    },
+    "apiUpdateRepoResponse": {
+      "type": "object",
+      "properties": {
+        "found": {
+          "type": "boolean"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
