@@ -31,6 +31,18 @@ type EventMessage struct {
 	Body map[string]interface{}
 }
 
+func CreateProjectMultiEventMessage(t EventType, projectIndexes []uint64, timestamp time.Time) EventMessage {
+	return EventMessage{
+		Type: t,
+		Body: map[string]interface{}{
+			"project_indexes": projectIndexes,
+			"project_count":   len(projectIndexes),
+			"operation":       fmt.Sprintf("Project %s", EventTypeToString(t)),
+			"timestamp":       timestamp,
+		},
+	}
+}
+
 func CreateProjectEventMessage(t EventType, projectId uint64, timestamp time.Time) EventMessage {
 	return EventMessage{
 		Type: t,

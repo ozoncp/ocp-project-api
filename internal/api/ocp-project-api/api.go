@@ -131,7 +131,29 @@ func (a *api) MultiCreateProject(
 ) (*desc.MultiCreateProjectResponse, error) {
 	log.Info().Msgf("Got MultiCreateProjectRequest: {projects count: %d}", len(req.Projects))
 
-	if err := checker.CheckRequest(req); err != nil {
+	var indexes []uint64
+	defer func() {
+		for range indexes {
+			prom.CreateProjectCounterInc("success")
+		}
+		for i := len(indexes); i < len(req.Projects); i++ {
+			prom.CreateProjectCounterInc("failed")
+		}
+	}()
+
+	defer func() {
+		if len(indexes) == 0 {
+			return
+		}
+		err := a.logProducer.SendMessage(
+			producer.CreateProjectMultiEventMessage(producer.Created, indexes, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("MultiCreateProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+	}()
+
+	var err error
+	if err := a.checkRequestAndProducer(req); err != nil {
 		return nil, err
 	}
 
@@ -144,14 +166,14 @@ func (a *api) MultiCreateProject(
 		projects = append(projects, proj)
 	}
 
-	cnt, err := a.projectStorage.MultiAddProject(ctx, projects)
+	indexes, err = a.projectStorage.MultiAddProject(ctx, projects)
 	if err != nil {
-		log.Error().Msgf("projectStorage.CreateProject() returns error: %v, count of created: %d", err, cnt)
-		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+		log.Error().Msgf("projectStorage.CreateProject() returns error: %v, count of created: %d", err, len(indexes))
+		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, len(indexes)).Error())
 	}
 
 	response := &desc.MultiCreateProjectResponse{
-		CountOfCreated: cnt,
+		CountOfCreated: int64(len(indexes)),
 	}
 
 	return response, nil

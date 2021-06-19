@@ -3,6 +3,7 @@ package flusher_test
 import (
 	"context"
 	"errors"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -179,7 +180,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 				{Id: 1, CourseId: 1, Name: "1"},
 			}
 
-			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Any()).Return(int64(0), nil).Times(0)
+			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Any()).Return([]uint64{}, nil).Times(0)
 		})
 
 		It("", func() {
@@ -196,7 +197,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 				{Id: 1, CourseId: 1, Name: "1"},
 			}
 
-			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1)
+			mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2}, nil).Times(1)
 		})
 
 		It("", func() {
@@ -213,7 +214,7 @@ var _ = Describe("Flush into ProjectStorage", func() {
 			}
 
 			mockProjectStorage.EXPECT().MultiAddProject(
-				ctx, gomock.Len(len(projects))).Return(int64(0), errors.New("some error")).Times(1)
+				ctx, gomock.Len(len(projects))).Return([]uint64{}, errors.New("some error")).Times(1)
 		})
 
 		It("", func() {
@@ -234,10 +235,10 @@ var _ = Describe("Flush into ProjectStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return([]uint64{}, nil).Times(1),
 				mockProjectStorage.EXPECT().MultiAddProject(
 					ctx,
-					gomock.Len(len(projects)-chunkSize)).Return(int64(0), errors.New("some error")).Times(1),
+					gomock.Len(len(projects)-chunkSize)).Return([]uint64{1, 2}, errors.New("some error")).Times(1),
 			)
 		})
 
@@ -262,10 +263,10 @@ var _ = Describe("Flush into ProjectStorage", func() {
 
 			gomock.InOrder(
 				mockProjectStorage.EXPECT().MultiAddProject(
-					ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+					ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2, 3}, nil).Times(1),
 				mockProjectStorage.EXPECT().MultiAddProject(
 					ctx,
-					gomock.Len(len(projects)-chunkSize)).Return(int64(0), nil).Times(1),
+					gomock.Len(len(projects)-chunkSize)).Return([]uint64{4}, nil).Times(1),
 			)
 		})
 

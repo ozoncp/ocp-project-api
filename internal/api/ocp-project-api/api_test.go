@@ -470,9 +470,13 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO projects").
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(1).AddRow(2)
+
+			mock.ExpectQuery("INSERT INTO projects").
 				WithArgs(projects[0].CourseId, projects[0].Name, projects[1].CourseId, projects[1].Name).
-				WillReturnResult(sqlmock.NewResult(2, 2))
+				WillReturnRows(rows)
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			multiCreateResponse, err = grpcApi.MultiCreateProject(ctx, multiCreateRequest)
 		})
@@ -514,9 +518,10 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO projects").
+			mock.ExpectQuery("INSERT INTO projects").
 				WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 				WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			multiCreateResponse, err = grpcApi.MultiCreateProject(ctx, multiCreateRequest)
 		})
@@ -545,13 +550,17 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO projects").
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+			mock.ExpectQuery("INSERT INTO projects").
 				WithArgs(projects[0].CourseId, projects[0].Name).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
 
-			mock.ExpectExec("INSERT INTO projects").
+			rows = sqlmock.NewRows([]string{"id"}).AddRow(2)
+			mock.ExpectQuery("INSERT INTO projects").
 				WithArgs(projects[1].CourseId, projects[1].Name).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			multiCreateResponse, err = grpcApi.MultiCreateProject(ctx, multiCreateRequest)
 		})

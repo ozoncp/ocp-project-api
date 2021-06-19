@@ -21,7 +21,7 @@ const (
 
 type ProjectStorage interface {
 	AddProject(ctx context.Context, project models.Project) (uint64, error)
-	MultiAddProject(ctx context.Context, projects []models.Project) (int64, error)
+	MultiAddProject(ctx context.Context, projects []models.Project) ([]uint64, error)
 	RemoveProject(ctx context.Context, projectId uint64) (bool, error)
 	DescribeProject(ctx context.Context, projectId uint64) (*models.Project, error)
 	ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error)
@@ -59,21 +59,21 @@ func (ps *projectStorage) AddProject(ctx context.Context, project models.Project
 	return project.Id, nil
 }
 
-func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models.Project) (int64, error) {
+func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models.Project) ([]uint64, error) {
 	tracer := opentracing.GlobalTracer()
 	span := tracer.StartSpan("MultiAddProject global")
 	defer span.Finish()
 
+	var indexes = make([]uint64, 0, len(projects))
+
 	projectBulks, err := utils.ProjectsSplitToBulks(projects, ps.chunkSize)
 	if err != nil {
-		return 0, err
+		return indexes, err
 	}
 
 	if err := ps.keepAliveDB(); err != nil {
-		return 0, err
+		return indexes, err
 	}
-
-	var rowsAffected int64
 
 	for index, bulk := range projectBulks {
 		err = func() error {
@@ -87,34 +87,35 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 			query := squirrel.Insert(projectTableName).
 				Columns("course_id", "name").
 				RunWith(ps.db).
+				Suffix("RETURNING \"id\"").
 				PlaceholderFormat(squirrel.Dollar)
 
 			for _, proj := range bulk {
 				query = query.Values(proj.CourseId, proj.Name)
 			}
 
-			var result sql.Result
-			result, err = query.ExecContext(ctx)
+			var rows *sql.Rows
+			rows, err = query.QueryContext(ctx)
 			if err != nil {
 				return err
 			}
 
-			var cnt int64
-			cnt, err = result.RowsAffected()
-			if err != nil {
-				// so RowsAffected() not supported
-				cnt = 0
+			for rows.Next() {
+				var id uint64
+				if err = rows.Scan(&id); err != nil {
+					return err
+				}
+				indexes = append(indexes, id)
 			}
-			rowsAffected = rowsAffected + cnt
 			return nil
 		}()
 
 		if err != nil {
-			return rowsAffected, err
+			return indexes, err
 		}
 	}
 	// we might get error from RowsAffected()
-	return rowsAffected, err
+	return indexes, err
 }
 
 func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (bool, error) {
