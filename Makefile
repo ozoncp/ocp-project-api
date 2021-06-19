@@ -37,10 +37,14 @@ PHONY: .build
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-simple-consumer cmd/ocp-simple-consumer/main.go
 
-PHONY: test
-test:
+PHONY: tests
+tests:
 		go test -coverprofile=coverage.out ./...
 		go tool cover -func=coverage.out
+
+PHONY: checks
+checks: tests
+		golangci-lint run ./...
 
 PHONY: install
 install: build .install
