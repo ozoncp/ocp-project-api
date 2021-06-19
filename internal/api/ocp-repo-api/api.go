@@ -136,7 +136,29 @@ func (a *api) MultiCreateRepo(
 ) (*desc.MultiCreateRepoResponse, error) {
 	log.Info().Msgf("Got MultiCreateRepoRequest: {repos count: %d}", len(req.Repos))
 
-	if err := checker.CheckRequest(req); err != nil {
+	var indexes []uint64
+	defer func() {
+		for range indexes {
+			prom.CreateRepoCounterInc("success")
+		}
+		for i := len(indexes); i < len(req.Repos); i++ {
+			prom.CreateRepoCounterInc("failed")
+		}
+	}()
+
+	defer func() {
+		if len(indexes) == 0 {
+			return
+		}
+		err := a.logProducer.SendMessage(
+			producer.CreateProjectMultiEventMessage(producer.Created, indexes, time.Now()))
+		if err != nil {
+			log.Warn().Msgf("MultiCreateProject: logProducer.SendMessage(...) returns error: %v", err)
+		}
+	}()
+
+	var err error
+	if err := a.checkRequestAndProducer(req); err != nil {
 		return nil, err
 	}
 
@@ -150,14 +172,14 @@ func (a *api) MultiCreateRepo(
 		repos = append(repos, rep)
 	}
 
-	cnt, err := a.repoStorage.MultiAddRepo(ctx, repos)
+	indexes, err = a.repoStorage.MultiAddRepo(ctx, repos)
 	if err != nil {
-		log.Error().Msgf("repoStorage.CreateRepo() returns error: %v, count of created: %d", err, cnt)
-		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, cnt).Error())
+		log.Error().Msgf("repoStorage.CreateRepo() returns error: %v, count of created: %d", err, len(indexes))
+		return nil, status.Error(codes.Internal, fmt.Errorf("%v, count of created: %d", err, len(indexes)).Error())
 	}
 
 	response := &desc.MultiCreateRepoResponse{
-		CountOfCreated: cnt,
+		CountOfCreated: int64(len(indexes)),
 	}
 
 	return response, nil

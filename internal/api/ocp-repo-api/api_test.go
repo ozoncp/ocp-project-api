@@ -489,11 +489,14 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO repos").
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(1).AddRow(2)
+			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(
 					repos[0].ProjectId, repos[0].UserId, repos[0].Link,
 					repos[1].ProjectId, repos[1].UserId, repos[1].Link).
-				WillReturnResult(sqlmock.NewResult(2, 2))
+				WillReturnRows(rows)
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			multiCreateResponse, err = grpcApi.MultiCreateRepo(ctx, multiCreateRequest)
 		})
@@ -537,9 +540,10 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO repos").
+			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 				WillReturnError(errors.New("i am bad database"))
+			logProducer.EXPECT().IsAvailable().Return(true)
 
 			multiCreateResponse, err = grpcApi.MultiCreateRepo(ctx, multiCreateRequest)
 		})
@@ -570,13 +574,17 @@ var _ = Describe("Api", func() {
 				},
 			}
 
-			mock.ExpectExec("INSERT INTO repos").
+			rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(repos[0].ProjectId, repos[0].UserId, repos[0].Link).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
 
-			mock.ExpectExec("INSERT INTO repos").
+			rows = sqlmock.NewRows([]string{"id"}).AddRow(2)
+			mock.ExpectQuery("INSERT INTO repos").
 				WithArgs(repos[1].ProjectId, repos[1].UserId, repos[1].Link).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
+			logProducer.EXPECT().IsAvailable().Return(true)
+			logProducer.EXPECT().SendMessage(gomock.Any())
 
 			multiCreateResponse, err = grpcApi.MultiCreateRepo(ctx, multiCreateRequest)
 		})

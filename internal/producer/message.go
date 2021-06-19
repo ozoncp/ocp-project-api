@@ -54,6 +54,18 @@ func CreateProjectEventMessage(t EventType, projectId uint64, timestamp time.Tim
 	}
 }
 
+func CreateRepoMultiEventMessage(t EventType, repoIndexes []uint64, timestamp time.Time) EventMessage {
+	return EventMessage{
+		Type: t,
+		Body: map[string]interface{}{
+			"repo_indexes": repoIndexes,
+			"repo_count":   len(repoIndexes),
+			"operation":    fmt.Sprintf("Project %s", EventTypeToString(t)),
+			"timestamp":    timestamp,
+		},
+	}
+}
+
 func CreateRepoEventMessage(t EventType, projectId uint64, timestamp time.Time) EventMessage {
 	return EventMessage{
 		Type: t,

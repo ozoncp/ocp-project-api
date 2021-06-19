@@ -114,7 +114,7 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 			return indexes, err
 		}
 	}
-	// we might get error from RowsAffected()
+	// we might get error from Scan()
 	return indexes, err
 }
 

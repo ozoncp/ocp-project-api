@@ -50,7 +50,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Any()).Return(int64(0), nil).Times(0)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Any()).Return([]uint64{}, nil).Times(0)
 		})
 
 		It("", func() {
@@ -67,7 +67,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2}, nil).Times(1)
 		})
 
 		It("", func() {
@@ -83,7 +83,7 @@ var _ = Describe("Flush into RepoStorage", func() {
 				{Id: 1, ProjectId: 1, UserId: 1, Link: "1"},
 			}
 
-			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos))).Return(int64(0), errors.New("some error")).Times(1)
+			mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos))).Return([]uint64{}, errors.New("some error")).Times(1)
 		})
 
 		It("", func() {
@@ -104,10 +104,10 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2, 3}, nil).Times(1),
 				mockRepoStorage.EXPECT().MultiAddRepo(
 					ctx,
-					gomock.Len(len(repos)-chunkSize)).Return(int64(0), errors.New("some error")).Times(1),
+					gomock.Len(len(repos)-chunkSize)).Return([]uint64{}, errors.New("some error")).Times(1),
 			)
 		})
 
@@ -131,8 +131,8 @@ var _ = Describe("Flush into RepoStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return(int64(0), nil).Times(1),
-				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos)-chunkSize)).Return(int64(0), nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2, 3}, nil).Times(1),
+				mockRepoStorage.EXPECT().MultiAddRepo(ctx, gomock.Len(len(repos)-chunkSize)).Return([]uint64{4}, nil).Times(1),
 			)
 		})
 
@@ -235,10 +235,10 @@ var _ = Describe("Flush into ProjectStorage", func() {
 			}
 
 			gomock.InOrder(
-				mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return([]uint64{}, nil).Times(1),
+				mockProjectStorage.EXPECT().MultiAddProject(ctx, gomock.Len(chunkSize)).Return([]uint64{1, 2, 3}, nil).Times(1),
 				mockProjectStorage.EXPECT().MultiAddProject(
 					ctx,
-					gomock.Len(len(projects)-chunkSize)).Return([]uint64{1, 2}, errors.New("some error")).Times(1),
+					gomock.Len(len(projects)-chunkSize)).Return([]uint64{}, errors.New("some error")).Times(1),
 			)
 		})
 
