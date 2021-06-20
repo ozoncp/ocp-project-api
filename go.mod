@@ -24,6 +24,7 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.38.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/ozoncp/ocp-project-api/pkg/ocp-project-api => ./pkg/ocp-project-api
