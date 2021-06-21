@@ -75,6 +75,7 @@
     },
     "/projects/version": {
       "get": {
+        "summary": "return service version",
         "operationId": "OcpProjectApi_Version",
         "responses": {
           "200": {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ozoncp/ocp-project-api/internal/api/checker"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/prom"
@@ -22,6 +23,13 @@ type api struct {
 	desc.UnimplementedOcpRepoApiServer
 	repoStorage storage.RepoStorage
 	logProducer producer.Producer
+}
+
+func (a *api) Version(
+	ctx context.Context,
+	req *desc.VersionRequest,
+) (*desc.VersionResponse, error) {
+	return &desc.VersionResponse{Version: config.Version}, nil
 }
 
 func (a *api) ListRepos(

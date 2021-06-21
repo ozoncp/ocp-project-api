@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpProjectApiClient interface {
+	// return service version
 	Version(ctx context.Context, in *VersionRequest, opts ...grpc.CallOption) (*VersionResponse, error)
 	// Return projects list
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
@@ -108,6 +109,7 @@ func (c *ocpProjectApiClient) UpdateProject(ctx context.Context, in *UpdateProje
 // All implementations must embed UnimplementedOcpProjectApiServer
 // for forward compatibility
 type OcpProjectApiServer interface {
+	// return service version
 	Version(context.Context, *VersionRequest) (*VersionResponse, error)
 	// Return projects list
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)

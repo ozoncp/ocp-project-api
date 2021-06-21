@@ -73,6 +73,29 @@
         ]
       }
     },
+    "/repos/version": {
+      "get": {
+        "summary": "Return service version",
+        "operationId": "OcpRepoApi_Version",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "OcpRepoApi"
+        ]
+      }
+    },
     "/repos/{repo_id}": {
       "get": {
         "summary": "Return repo description by it id",
@@ -225,6 +248,14 @@
       "properties": {
         "found": {
           "type": "boolean"
+        }
+      }
+    },
+    "apiVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
         }
       }
     },

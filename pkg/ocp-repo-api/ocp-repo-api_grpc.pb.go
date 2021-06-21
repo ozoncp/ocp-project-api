@@ -18,6 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpRepoApiClient interface {
+	// Return service version
+	Version(ctx context.Context, in *VersionRequest, opts ...grpc.CallOption) (*VersionResponse, error)
 	// Return repos list
 	ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error)
 	// Return repo description by it id
@@ -38,6 +40,15 @@ type ocpRepoApiClient struct {
 
 func NewOcpRepoApiClient(cc grpc.ClientConnInterface) OcpRepoApiClient {
 	return &ocpRepoApiClient{cc}
+}
+
+func (c *ocpRepoApiClient) Version(ctx context.Context, in *VersionRequest, opts ...grpc.CallOption) (*VersionResponse, error) {
+	out := new(VersionResponse)
+	err := c.cc.Invoke(ctx, "/ocp.repo.api.OcpRepoApi/Version", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *ocpRepoApiClient) ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error) {
@@ -98,6 +109,8 @@ func (c *ocpRepoApiClient) UpdateRepo(ctx context.Context, in *UpdateRepoRequest
 // All implementations must embed UnimplementedOcpRepoApiServer
 // for forward compatibility
 type OcpRepoApiServer interface {
+	// Return service version
+	Version(context.Context, *VersionRequest) (*VersionResponse, error)
 	// Return repos list
 	ListRepos(context.Context, *ListReposRequest) (*ListReposResponse, error)
 	// Return repo description by it id
@@ -117,6 +130,9 @@ type OcpRepoApiServer interface {
 type UnimplementedOcpRepoApiServer struct {
 }
 
+func (UnimplementedOcpRepoApiServer) Version(context.Context, *VersionRequest) (*VersionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
+}
 func (UnimplementedOcpRepoApiServer) ListRepos(context.Context, *ListReposRequest) (*ListReposResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepos not implemented")
 }
@@ -146,6 +162,24 @@ type UnsafeOcpRepoApiServer interface {
 
 func RegisterOcpRepoApiServer(s grpc.ServiceRegistrar, srv OcpRepoApiServer) {
 	s.RegisterService(&OcpRepoApi_ServiceDesc, srv)
+}
+
+func _OcpRepoApi_Version_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpRepoApiServer).Version(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.repo.api.OcpRepoApi/Version",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpRepoApiServer).Version(ctx, req.(*VersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OcpRepoApi_ListRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -263,6 +297,10 @@ var OcpRepoApi_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ocp.repo.api.OcpRepoApi",
 	HandlerType: (*OcpRepoApiServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Version",
+			Handler:    _OcpRepoApi_Version_Handler,
+		},
 		{
 			MethodName: "ListRepos",
 			Handler:    _OcpRepoApi_ListRepos_Handler,
