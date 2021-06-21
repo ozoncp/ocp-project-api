@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpProjectApiClient interface {
+	Version(ctx context.Context, in *VersionRequest, opts ...grpc.CallOption) (*VersionResponse, error)
 	// Return projects list
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 	// Return projects description by it id
@@ -38,6 +39,15 @@ type ocpProjectApiClient struct {
 
 func NewOcpProjectApiClient(cc grpc.ClientConnInterface) OcpProjectApiClient {
 	return &ocpProjectApiClient{cc}
+}
+
+func (c *ocpProjectApiClient) Version(ctx context.Context, in *VersionRequest, opts ...grpc.CallOption) (*VersionResponse, error) {
+	out := new(VersionResponse)
+	err := c.cc.Invoke(ctx, "/ocp.project.api.OcpProjectApi/Version", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *ocpProjectApiClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
@@ -98,6 +108,7 @@ func (c *ocpProjectApiClient) UpdateProject(ctx context.Context, in *UpdateProje
 // All implementations must embed UnimplementedOcpProjectApiServer
 // for forward compatibility
 type OcpProjectApiServer interface {
+	Version(context.Context, *VersionRequest) (*VersionResponse, error)
 	// Return projects list
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
 	// Return projects description by it id
@@ -117,6 +128,9 @@ type OcpProjectApiServer interface {
 type UnimplementedOcpProjectApiServer struct {
 }
 
+func (UnimplementedOcpProjectApiServer) Version(context.Context, *VersionRequest) (*VersionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
+}
 func (UnimplementedOcpProjectApiServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
 }
@@ -146,6 +160,24 @@ type UnsafeOcpProjectApiServer interface {
 
 func RegisterOcpProjectApiServer(s grpc.ServiceRegistrar, srv OcpProjectApiServer) {
 	s.RegisterService(&OcpProjectApi_ServiceDesc, srv)
+}
+
+func _OcpProjectApi_Version_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpProjectApiServer).Version(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.project.api.OcpProjectApi/Version",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpProjectApiServer).Version(ctx, req.(*VersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OcpProjectApi_ListProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -263,6 +295,10 @@ var OcpProjectApi_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ocp.project.api.OcpProjectApi",
 	HandlerType: (*OcpProjectApiServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Version",
+			Handler:    _OcpProjectApi_Version_Handler,
+		},
 		{
 			MethodName: "ListProjects",
 			Handler:    _OcpProjectApi_ListProjects_Handler,

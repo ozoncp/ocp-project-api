@@ -1,3 +1,5 @@
+version:=$$(git describe --long --tags 2>/dev/null | sed -e "s/v\([0-9]\+\)\.\([0-9]\+\)-\([0-9]\+\)-.\+/\1.\2.\3/")
+
 .PHONY: build
 build: vendor-proto .generate .build
 
@@ -33,8 +35,8 @@ PHONY: .generate
 
 PHONY: .build
 .build:
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
+		CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
+		CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-simple-consumer cmd/ocp-simple-consumer/main.go
 
 PHONY: tests

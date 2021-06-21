@@ -73,6 +73,28 @@
         ]
       }
     },
+    "/projects/version": {
+      "get": {
+        "operationId": "OcpProjectApi_Version",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "OcpProjectApi"
+        ]
+      }
+    },
     "/projects/{project_id}": {
       "get": {
         "summary": "Return projects description by it id",
@@ -217,6 +239,14 @@
       "properties": {
         "found": {
           "type": "boolean"
+        }
+      }
+    },
+    "apiVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
         }
       }
     },

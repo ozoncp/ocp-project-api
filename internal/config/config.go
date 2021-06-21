@@ -8,6 +8,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	Version string
+)
+
 type Config struct {
 	Service  ServiceConfig  `yaml:"service"`
 	DB       PostgresConfig `yaml:"storage"`
@@ -83,6 +87,7 @@ func getEndpoint(host string, port string) string {
 }
 
 func LoadGlobal(path string) {
+	log.Info().Msgf("Version: %s", Version)
 	if err := validateConfigPath(path); err != nil {
 		log.Error().Msgf("Validation config path error: %v", err)
 		return
