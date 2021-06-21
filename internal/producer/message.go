@@ -37,7 +37,7 @@ func CreateProjectMultiEventMessage(t EventType, projectIndexes []uint64, timest
 		Body: map[string]interface{}{
 			"project_indexes": projectIndexes,
 			"project_count":   len(projectIndexes),
-			"operation":       fmt.Sprintf("Project %s", EventTypeToString(t)),
+			"operation":       fmt.Sprintf("Multi projects %s", EventTypeToString(t)),
 			"timestamp":       timestamp,
 		},
 	}
@@ -60,7 +60,7 @@ func CreateRepoMultiEventMessage(t EventType, repoIndexes []uint64, timestamp ti
 		Body: map[string]interface{}{
 			"repo_indexes": repoIndexes,
 			"repo_count":   len(repoIndexes),
-			"operation":    fmt.Sprintf("Project %s", EventTypeToString(t)),
+			"operation":    fmt.Sprintf("Multi repos %s", EventTypeToString(t)),
 			"timestamp":    timestamp,
 		},
 	}

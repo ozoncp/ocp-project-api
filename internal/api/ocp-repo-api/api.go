@@ -159,7 +159,7 @@ func (a *api) MultiCreateRepo(
 			return
 		}
 		err := a.logProducer.SendMessage(
-			producer.CreateProjectMultiEventMessage(producer.Created, indexes, time.Now()))
+			producer.CreateRepoMultiEventMessage(producer.Created, indexes, time.Now()))
 		if err != nil {
 			log.Warn().Msgf("MultiCreateProject: logProducer.SendMessage(...) returns error: %v", err)
 		}
