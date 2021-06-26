@@ -4,4 +4,4 @@ bin/
 vendor.protogen/
 commit.txt
 coverage.out
-
+.*swp

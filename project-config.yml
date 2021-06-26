@@ -16,4 +16,4 @@ kafka:
     capacity: 255
 metrics:
     host: 0.0.0.0
-    port: 9010
+    port: 9100

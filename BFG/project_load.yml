@@ -1,0 +1,21 @@
+pools:
+  - id: HTTP pool
+    gun:
+        type: try_bfg   # custom gun name specified
+        target: 127.0.0.1:8083
+    ammo:
+        type: custom_provider
+        source:
+            type: inline
+            data: |
+                {"tag": "create", "CourseId":1, "Name": "1"}
+    result:
+        type: json
+        sink: stdout
+    rps: 
+        - {duration: 2s, type: line,  from: 1, to: 10000}
+    startup:
+        type: once
+        times: 1
+log:
+    level: debug
