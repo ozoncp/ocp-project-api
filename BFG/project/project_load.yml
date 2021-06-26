@@ -9,13 +9,15 @@ pools:
             type: inline
             data: |
                 {"tag": "create", "CourseId":1, "Name": "1"}
+                {"tag": "update", "ProjectId": 2000, "CourseId":20, "Name": "20"}
+                {"tag": "multiCreate", "ProjectsCount": 40}
     result:
         type: json
         sink: stdout
     rps: 
-        - {duration: 2s, type: line,  from: 1, to: 10000}
+        - {duration: 2s, type: line,  from: 1, to: 1000}
     startup:
         type: once
-        times: 1
+        times: 10
 log:
     level: debug

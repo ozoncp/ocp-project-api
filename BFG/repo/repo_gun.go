@@ -8,9 +8,8 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
-	pb "github.com/ozoncp/ocp-project-api/pkg/ocp-project-api"
+	pb "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api"
 
 	"github.com/spf13/afero"
 	"github.com/yandex/pandora/cli"
@@ -23,15 +22,12 @@ import (
 )
 
 type Ammo struct {
-	Tag       string
-	ProjectId uint64
-	CourseId  uint64
-	Name      string
-}
-
-type Sample struct {
-	URL              string
-	ShootTimeSeconds float64
+	Tag        string
+	ReposCount uint
+	RepoId     uint64
+	ProjectId  uint64
+	UserId     uint64
+	Link       string
 }
 
 type GunConfig struct {
@@ -40,7 +36,7 @@ type GunConfig struct {
 
 type Gun struct {
 	// Configured on construction.
-	client grpc.ClientConn
+	client *grpc.ClientConn
 	conf   GunConfig
 	// Configured on Bind, before shooting
 	aggr core.Aggregator // May be your custom Aggregator.
@@ -53,15 +49,15 @@ func NewGun(conf GunConfig) *Gun {
 
 func (g *Gun) Bind(aggr core.Aggregator, deps core.GunDeps) error {
 	// create gRPC stub at gun initialization
-	conn, err := grpc.Dial(
+	conn, err := grpc.DialContext(
+		context.TODO(),
 		g.conf.Target,
 		grpc.WithInsecure(),
-		grpc.WithTimeout(time.Second),
 		grpc.WithUserAgent("load test, pandora custom shooter"))
 	if err != nil {
 		log.Fatalf("FATAL: %s", err)
 	}
-	g.client = *conn
+	g.client = conn
 	g.aggr = aggr
 	g.GunDeps = deps
 	return nil
@@ -72,11 +68,54 @@ func (g *Gun) Shoot(ammo core.Ammo) {
 	g.shoot(customAmmo)
 }
 
-func (g *Gun) create_method(client pb.OcpProjectApiClient, ammo *Ammo) int {
+func (g *Gun) create_method(client pb.OcpRepoApiClient, ammo *Ammo) int {
 	code := 0
-	out, err := client.CreateProject(
+	out, err := client.CreateRepo(
 		context.TODO(),
-		&pb.CreateProjectRequest{CourseId: ammo.CourseId, Name: ammo.Name},
+		&pb.CreateRepoRequest{ProjectId: ammo.ProjectId, UserId: ammo.UserId, Link: ammo.Link},
+	)
+
+	if err != nil {
+		log.Printf("FATAL: %s", err)
+		code = 500
+	}
+
+	if out != nil {
+		code = 200
+	}
+	return code
+}
+
+func (g *Gun) update_method(client pb.OcpRepoApiClient, ammo *Ammo) int {
+	code := 0
+	var repo = pb.Repo{Id: ammo.RepoId, ProjectId: ammo.ProjectId, UserId: ammo.UserId, Link: ammo.Link}
+	out, err := client.UpdateRepo(
+		context.TODO(),
+		&pb.UpdateRepoRequest{Repo: &repo},
+	)
+
+	if err != nil {
+		log.Printf("FATAL: %s", err)
+		code = 500
+	}
+
+	if out != nil {
+		code = 200
+	}
+	return code
+}
+
+func (g *Gun) multi_create_method(client pb.OcpRepoApiClient, ammo *Ammo) int {
+	code := 0
+	repos := make([]*pb.NewRepo, 0, ammo.ReposCount)
+	for i := 1; i <= int(ammo.ReposCount); i++ {
+		var rep = pb.NewRepo{ProjectId: uint64(i), UserId: uint64(i), Link: "1"}
+		repos = append(repos, &rep)
+	}
+
+	out, err := client.MultiCreateRepo(
+		context.TODO(),
+		&pb.MultiCreateRepoRequest{Repos: repos},
 	)
 
 	if err != nil {
@@ -95,11 +134,15 @@ func (g *Gun) shoot(ammo *Ammo) {
 	sample := netsample.Acquire(ammo.Tag)
 
 	conn := g.client
-	client := pb.NewOcpProjectApiClient(&conn)
+	client := pb.NewOcpRepoApiClient(conn)
 
 	switch ammo.Tag {
 	case "create":
 		code = g.create_method(client, ammo)
+	case "update":
+		code = g.update_method(client, ammo)
+	case "multiCreate":
+		code = g.multi_create_method(client, ammo)
 	default:
 		code = 404
 	}

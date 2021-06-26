@@ -39,11 +39,17 @@ PHONY: .build
 		CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-simple-consumer cmd/ocp-simple-consumer/main.go
 
-PHONY: bfg
-bfg: .bfg
-.bfg:
-		CGO_ENABLED=0 GOOS=linux go build -o bin/project_gun ./BFG/project_gun.go
-		bin/project_gun ./BFG/project_load.yml
+PHONY: bfg_project
+bfg_project: .bfg_proj
+.bfg_proj:
+		CGO_ENABLED=0 GOOS=linux go build -o bin/project_gun ./BFG/project/project_gun.go
+		bin/project_gun ./BFG/project/project_load.yml
+
+PHONY: bfg_repo
+bfg_repo: .bfg_repo
+.bfg_repo:
+		CGO_ENABLED=0 GOOS=linux go build -o bin/repo_gun ./BFG/repo/repo_gun.go
+		bin/repo_gun ./BFG/repo/repo_load.yml
 
 PHONY: tests
 tests:
