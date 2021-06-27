@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/tracer"
@@ -26,6 +29,24 @@ func main() {
 	if *debug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
+
+	go func() {
+		// See comment in ocp-project-api
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-c
+		log.Info().Msgf("Caught signal: %v", sig)
+		GrpcMutex.Lock()
+		defer GrpcMutex.Unlock()
+		if GrpcServer != nil {
+			log.Info().Msg("Stopping Grpc server...")
+			GrpcServer.GracefulStop()
+			log.Info().Msg("Grpc server is stopped")
+		} else {
+			log.Info().Msg("No Grpc server is started")
+		}
+		syscall.Exit(1)
+	}()
 
 	if err := runGrpcAndGateway(); err != nil {
 		log.Fatal().Msgf("Something went wrong: %v", err)

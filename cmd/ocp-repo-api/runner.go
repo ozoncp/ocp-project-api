@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	_ "github.com/lib/pq"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+var (
+	// see comment in ocp-project-api
+	GrpcMutex  sync.Mutex
+	GrpcServer *grpc.Server
+)
+
 func runGrpcAndGateway() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -33,8 +40,11 @@ func runGrpcAndGateway() error {
 
 	repoStorage := storage.NewRepoStorage(db, config.Global.DB.ChunkSize)
 
-	grpcServer := grpc.NewServer()
-	reflection.Register(grpcServer)
+	GrpcMutex.Lock()
+	GrpcServer = grpc.NewServer()
+	// see comment in ocp-project-api
+	reflection.Register(GrpcServer)
+	GrpcMutex.Unlock()
 
 	var logProducer producer.Producer
 	logProducer, err = producer.NewProducer(ctx)
@@ -42,7 +52,7 @@ func runGrpcAndGateway() error {
 		return fmt.Errorf("Kafka producer creation failed: %v", err)
 	}
 
-	desc.RegisterOcpRepoApiServer(grpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))
+	desc.RegisterOcpRepoApiServer(GrpcServer, repoApi.NewOcpRepoApi(repoStorage, logProducer))
 	listen, err := net.Listen("tcp", config.Global.Service.GrpcEndpoint())
 	if err != nil {
 		return fmt.Errorf("initialization grpc server error: %v", err)
@@ -51,7 +61,7 @@ func runGrpcAndGateway() error {
 	var group errgroup.Group
 	group.Go(func() error {
 		log.Info().Msgf("Serving grpc requests on %s", config.Global.Service.GrpcEndpoint())
-		return grpcServer.Serve(listen)
+		return GrpcServer.Serve(listen)
 	})
 
 	gwmux := runtime.NewServeMux()
