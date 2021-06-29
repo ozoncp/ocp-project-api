@@ -13,6 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Add tag
+      run: git tag v0.0.0 
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
