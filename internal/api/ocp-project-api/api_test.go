@@ -119,6 +119,20 @@ var _ = Describe("Api", func() {
 		})
 	})
 
+	Context("create project: producer is not available", func() {
+		BeforeEach(func() {
+			createRequest = &desc.CreateProjectRequest{CourseId: 1, Name: "1"}
+
+			logProducer.EXPECT().IsAvailable().Return(false)
+
+			createResponse, err = grpcApi.CreateProject(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+		})
+	})
+
 	Context("create project: producer error", func() {
 		var projectId uint64 = 1
 
