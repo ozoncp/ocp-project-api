@@ -80,6 +80,20 @@ var _ = Describe("Api", func() {
 		ctrl.Finish()
 	})
 
+	Context("version checking", func() {
+		var versionResponse *desc.VersionResponse
+		BeforeEach(func() {
+			versionRequest := &desc.VersionRequest{}
+
+			versionResponse, err = grpcApi.Version(ctx, versionRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(versionResponse.Version).Should(MatchRegexp("\\d+.\\d+.\\d+"))
+		})
+	})
+
 	Context("create repo simple", func() {
 		var repoId uint64 = 1
 

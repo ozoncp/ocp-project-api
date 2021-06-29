@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +22,8 @@ var (
 func main() {
 	flag.Parse()
 	config.LoadGlobal(*configPath)
+
+	go http.ListenAndServe(":8090", nil)
 
 	tracer.InitTracing("ocp_project_api")
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix

@@ -53,7 +53,7 @@ bfg_repo: .bfg_repo
 
 PHONY: tests
 tests:
-		go test -coverprofile=coverage.out ./...
+		go test -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -coverprofile=coverage.out ./...
 		go tool cover -func=coverage.out
 
 PHONY: checks
