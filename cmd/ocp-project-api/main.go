@@ -23,8 +23,6 @@ func main() {
 	flag.Parse()
 	config.LoadGlobal(*configPath)
 
-	go http.ListenAndServe(":8090", nil)
-
 	tracer.InitTracing("ocp_project_api")
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
@@ -34,9 +32,19 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
+	log.Debug().Msg("Debug level is up")
+
+	go func() {
+		const pprofEndpoint = ":8090"
+		log.Info().Msgf("Profiling service on %[1]s (to watch go to %[1]s/debug/pprof link)", pprofEndpoint)
+		if err := http.ListenAndServe(pprofEndpoint, nil); err != nil {
+			log.Warn().Msgf("Profiling service failed: %v", err)
+		}
+	}()
+
 	go func() {
 		// So we have some connections: grpc, jaeger, kafka, db and grpc.
-		// And two listenners for gateway grpc and prometheus.
+		// And two listenners for grpc gateway and prometheus.
 		// Only one of this connections is meaning. It's grpc connection, because
 		// kafka, jaeger and db we use only in grpc. Db doesn't need to close as jaeger and kafka connections (this conn is closed automatically).
 		// Gateway and prometheus doesn't need to close too, it's closed by system for some timeout as Db, jaeger and kafka connections.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,16 @@ func main() {
 	if *debug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
+
+	log.Debug().Msg("Debug level is up")
+
+	go func() {
+		const pprofEndpoint = ":8090"
+		log.Info().Msgf("Profiling service on %[1]s (to watch go to %[1]s/debug/pprof link)", pprofEndpoint)
+		if err := http.ListenAndServe(pprofEndpoint, nil); err != nil {
+			log.Warn().Msgf("Profiling service failed: %v", err)
+		}
+	}()
 
 	go func() {
 		// See comment in ocp-project-api
