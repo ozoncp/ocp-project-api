@@ -1,0 +1,23 @@
+pools:
+  - id: HTTP pool
+    gun:
+        type: try_bfg   # custom gun name specified
+        target: 127.0.0.1:8084
+    ammo:
+        type: custom_provider
+        source:
+            type: inline
+            data: |
+                {"tag": "create", "ProjectId": 1, "UserId":1, "Link": "1"}
+                {"tag": "update", "RepoId": 80, "ProjectId": 2, "UserId":2, "Link": "2"}
+                {"tag": "multiCreate", "ReposCount": 40}
+    result:
+        type: json
+        sink: stdout
+    rps: 
+        - {duration: 2s, type: line,  from: 1, to: 1000}
+    startup:
+        type: once
+        times: 10
+log:
+    level: debug

@@ -10,6 +10,13 @@ option go_package = "github.com/ozoncp/ocp-project-api/pkg/ocp-repo-api;ocp_repo
 
 service OcpRepoApi {
 
+  // Return service version
+  rpc Version(VersionRequest) returns (VersionResponse) {
+    option (google.api.http) = {
+      get: "/repos/version"
+    };
+  }
+
   // Return repos list
   rpc ListRepos(ListReposRequest) returns (ListReposResponse) {
     option (google.api.http) = {
@@ -51,6 +58,13 @@ service OcpRepoApi {
       post: "/repos"
     };
   }
+}
+
+message VersionRequest {
+}
+
+message VersionResponse {
+  string version = 1;
 }
 
 message ListReposRequest {

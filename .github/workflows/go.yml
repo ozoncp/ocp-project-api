@@ -2,7 +2,7 @@ name: Build and test
 
 on:
   push:
-    branches: [ main, homework* ]
+    branches: [ main, homework*, feature/* ]
   pull_request:
     branches: [ main ]
 
@@ -13,6 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Add tag
+      run: git tag v0.0.0 
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -22,4 +25,4 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: make tests

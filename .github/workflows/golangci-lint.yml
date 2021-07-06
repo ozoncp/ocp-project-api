@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - v*
-    branches: [ main, homework* ]
+    branches: [ main, homework*, feature/* ]
   pull_request:
 jobs:
   golangci:

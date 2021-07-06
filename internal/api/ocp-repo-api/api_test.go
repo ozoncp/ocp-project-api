@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	projectApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
+	repoApi "github.com/ozoncp/ocp-project-api/internal/api/ocp-repo-api"
 	"github.com/ozoncp/ocp-project-api/internal/mocks"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/storage"
@@ -67,7 +67,7 @@ var _ = Describe("Api", func() {
 
 		repoStorage = storage.NewRepoStorage(sqlxDB, 2)
 		logProducer = mocks.NewMockProducer(ctrl)
-		grpcApi = projectApi.NewOcpRepoApi(repoStorage, logProducer)
+		grpcApi = repoApi.NewOcpRepoApi(repoStorage, logProducer)
 	})
 
 	JustBeforeEach(func() {
@@ -78,6 +78,20 @@ var _ = Describe("Api", func() {
 		err = db.Close()
 		Expect(err).Should(BeNil())
 		ctrl.Finish()
+	})
+
+	Context("version checking", func() {
+		var versionResponse *desc.VersionResponse
+		BeforeEach(func() {
+			versionRequest := &desc.VersionRequest{}
+
+			versionResponse, err = grpcApi.Version(ctx, versionRequest)
+		})
+
+		It("", func() {
+			Expect(err).Should(BeNil())
+			Expect(versionResponse.Version).Should(MatchRegexp("\\d+.\\d+.\\d+"))
+		})
 	})
 
 	Context("create repo simple", func() {
@@ -101,6 +115,20 @@ var _ = Describe("Api", func() {
 		It("", func() {
 			Expect(err).Should(BeNil())
 			Expect(createResponse.RepoId).Should(Equal(repoId))
+		})
+	})
+
+	Context("create repo: producer is not available", func() {
+		BeforeEach(func() {
+			createRequest = &desc.CreateRepoRequest{UserId: 1, ProjectId: 1, Link: "1"}
+
+			logProducer.EXPECT().IsAvailable().Return(false)
+
+			createResponse, err = grpcApi.CreateRepo(ctx, createRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
 		})
 	})
 
@@ -128,7 +156,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("create project: invalid argument", func() {
+	Context("create repo: invalid argument", func() {
 		BeforeEach(func() {
 			createRequest = &desc.CreateRepoRequest{ProjectId: 0, UserId: 0, Link: "1"}
 
@@ -141,7 +169,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("create project: sql query returns error", func() {
+	Context("create repo: sql query returns error", func() {
 		BeforeEach(func() {
 			createRequest = &desc.CreateRepoRequest{ProjectId: 1, UserId: 1, Link: "1"}
 
@@ -170,7 +198,8 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.ProjectId,
 					updateRequest.Repo.UserId,
 					updateRequest.Repo.Link,
-					updateRequest.Repo.Id).
+					updateRequest.Repo.Id,
+					false).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
 			logProducer.EXPECT().IsAvailable().Return(true)
@@ -196,7 +225,8 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.ProjectId,
 					updateRequest.Repo.UserId,
 					updateRequest.Repo.Link,
-					updateRequest.Repo.Id).
+					updateRequest.Repo.Id,
+					false).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
 			logProducer.EXPECT().IsAvailable().Return(true)
@@ -222,7 +252,8 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.ProjectId,
 					updateRequest.Repo.UserId,
 					updateRequest.Repo.Link,
-					updateRequest.Repo.Id).
+					updateRequest.Repo.Id,
+					false).
 				WillReturnResult(sqlmock.NewResult(0, 0))
 			logProducer.EXPECT().IsAvailable().Return(true)
 
@@ -261,7 +292,8 @@ var _ = Describe("Api", func() {
 					updateRequest.Repo.ProjectId,
 					updateRequest.Repo.UserId,
 					updateRequest.Repo.Link,
-					updateRequest.Repo.Id).
+					updateRequest.Repo.Id,
+					false).
 				WillReturnError(errors.New("i am bad database"))
 			logProducer.EXPECT().IsAvailable().Return(true)
 
@@ -274,7 +306,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("describe project simple", func() {
+	Context("describe repo simple", func() {
 		var (
 			repoId    uint64 = 1
 			projectId uint64 = 1
@@ -288,7 +320,7 @@ var _ = Describe("Api", func() {
 			rows := sqlmock.NewRows([]string{"id", "project_id", "user_id", "link"}).
 				AddRow(repoId, projectId, userId, link)
 			mock.ExpectQuery("SELECT (.+) FROM repos WHERE").
-				WithArgs(describeRequest.RepoId).
+				WithArgs(describeRequest.RepoId, false).
 				WillReturnRows(rows)
 
 			describeResponse, err = grpcApi.DescribeRepo(ctx, describeRequest)
@@ -303,7 +335,26 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("describe project: invalid argument", func() {
+	Context("describe repo: not found", func() {
+
+		BeforeEach(func() {
+			describeRequest = &desc.DescribeRepoRequest{RepoId: 1}
+
+			rows := sqlmock.NewRows([]string{"id", "course_id", "name"})
+			mock.ExpectQuery("SELECT (.+) FROM repos WHERE").
+				WithArgs(describeRequest.RepoId, false).
+				WillReturnRows(rows)
+
+			describeResponse, err = grpcApi.DescribeRepo(ctx, describeRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(describeResponse).Should(BeNil())
+		})
+	})
+
+	Context("describe repo: invalid argument", func() {
 		BeforeEach(func() {
 			describeRequest = &desc.DescribeRepoRequest{RepoId: 0}
 
@@ -315,12 +366,12 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("describe project: sql query returns error", func() {
+	Context("describe repo: sql query returns error", func() {
 		BeforeEach(func() {
 			describeRequest = &desc.DescribeRepoRequest{RepoId: 1}
 
 			mock.ExpectQuery("SELECT (.+) FROM repos WHERE").
-				WithArgs(describeRequest.RepoId).
+				WithArgs(describeRequest.RepoId, false).
 				WillReturnError(errors.New("i am bad database"))
 
 			describeResponse, err = grpcApi.DescribeRepo(ctx, describeRequest)
@@ -332,14 +383,14 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("remove project simple", func() {
+	Context("remove repo simple", func() {
 		var repoId uint64 = 1
 
 		BeforeEach(func() {
 			removeRequest = &desc.RemoveRepoRequest{RepoId: repoId}
 
 			mock.ExpectExec("DELETE FROM repos").
-				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
+				WithArgs(removeRequest.RepoId, false).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any())
@@ -353,14 +404,14 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("remove project: producer error", func() {
+	Context("remove repo: producer error", func() {
 		var repoId uint64 = 1
 
 		BeforeEach(func() {
 			removeRequest = &desc.RemoveRepoRequest{RepoId: repoId}
 
 			mock.ExpectExec("DELETE FROM repos").
-				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 1))
+				WithArgs(removeRequest.RepoId, false).WillReturnResult(sqlmock.NewResult(0, 1))
 
 			logProducer.EXPECT().IsAvailable().Return(true)
 			logProducer.EXPECT().SendMessage(gomock.Any()).Return(errors.New("i am bad producer"))
@@ -374,14 +425,14 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("remove project: not found", func() {
+	Context("remove repo: not found", func() {
 		var repoId uint64 = 1
 
 		BeforeEach(func() {
 			removeRequest = &desc.RemoveRepoRequest{RepoId: repoId}
 
 			mock.ExpectExec("DELETE FROM repos").
-				WithArgs(removeRequest.RepoId).WillReturnResult(sqlmock.NewResult(0, 0))
+				WithArgs(removeRequest.RepoId, false).WillReturnResult(sqlmock.NewResult(0, 0))
 			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
@@ -393,7 +444,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("remove project: invalid argument", func() {
+	Context("remove repo: invalid argument", func() {
 		var repoId uint64 = 0
 
 		BeforeEach(func() {
@@ -406,14 +457,14 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("remove project: sql query returns error", func() {
+	Context("remove repo: sql query returns error", func() {
 		var repoId uint64 = 1
 
 		BeforeEach(func() {
 			removeRequest = &desc.RemoveRepoRequest{RepoId: repoId}
 
 			mock.ExpectExec("DELETE FROM repos").
-				WithArgs(removeRequest.RepoId).WillReturnError(errors.New("i am bad database"))
+				WithArgs(removeRequest.RepoId, false).WillReturnError(errors.New("i am bad database"))
 			logProducer.EXPECT().IsAvailable().Return(true)
 
 			removeResponse, err = grpcApi.RemoveRepo(ctx, removeRequest)
@@ -424,7 +475,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("list project simple", func() {
+	Context("list repo simple", func() {
 		var (
 			limit  uint64 = 10
 			offset uint64 = 0
@@ -438,7 +489,8 @@ var _ = Describe("Api", func() {
 				AddRow(repos[1].Id, repos[1].ProjectId, repos[1].UserId, repos[1].Link)
 
 			mock.ExpectQuery(
-				fmt.Sprintf("SELECT id, project_id, user_id, link FROM repos LIMIT %d OFFSET %d", limit, offset)).
+				fmt.Sprintf("SELECT id, project_id, user_id, link FROM repos WHERE deleted = \\$1 LIMIT %d OFFSET %d", limit, offset)).
+				WithArgs(false).
 				WillReturnRows(rows)
 
 			listResponse, err = grpcApi.ListRepos(ctx, listRequest)
@@ -450,7 +502,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("list project: sql query returns error", func() {
+	Context("list repo: sql query returns error", func() {
 		var (
 			limit  uint64 = 10
 			offset uint64 = 0
@@ -460,7 +512,8 @@ var _ = Describe("Api", func() {
 			listRequest = &desc.ListReposRequest{Limit: limit, Offset: offset}
 
 			mock.ExpectQuery(
-				fmt.Sprintf("SELECT id, project_id, user_id, link FROM repos LIMIT %d OFFSET %d", limit, offset)).
+				fmt.Sprintf("SELECT id, project_id, user_id, link FROM repos WHERE deleted = \\$1 LIMIT %d OFFSET %d", limit, offset)).
+				WithArgs(false).
 				WillReturnError(errors.New("i am bad database"))
 
 			listResponse, err = grpcApi.ListRepos(ctx, listRequest)
@@ -472,7 +525,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("multi create project simple", func() {
+	Context("multi create repo simple", func() {
 		BeforeEach(func() {
 			multiCreateRequest = &desc.MultiCreateRepoRequest{
 				Repos: []*desc.NewRepo{
@@ -507,7 +560,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("multi create project: invalid argument", func() {
+	Context("multi create repo: invalid argument", func() {
 		BeforeEach(func() {
 			multiCreateRequest = &desc.MultiCreateRepoRequest{
 				Repos: []*desc.NewRepo{
@@ -528,7 +581,7 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("multi create project: sql query returns error", func() {
+	Context("multi create repo: sql query returns error", func() {
 		BeforeEach(func() {
 			multiCreateRequest = &desc.MultiCreateRepoRequest{
 				Repos: []*desc.NewRepo{
@@ -554,10 +607,10 @@ var _ = Describe("Api", func() {
 		})
 	})
 
-	Context("multi create project: split to bulks", func() {
+	Context("multi create repo: split to bulks", func() {
 		BeforeEach(func() {
 			repoStorage = storage.NewRepoStorage(sqlxDB, 1)
-			grpcApi = projectApi.NewOcpRepoApi(repoStorage, logProducer)
+			grpcApi = repoApi.NewOcpRepoApi(repoStorage, logProducer)
 
 			multiCreateRequest = &desc.MultiCreateRepoRequest{
 				Repos: []*desc.NewRepo{

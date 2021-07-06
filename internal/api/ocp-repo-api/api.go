@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ozoncp/ocp-project-api/internal/api/checker"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/producer"
 	"github.com/ozoncp/ocp-project-api/internal/prom"
@@ -22,6 +23,13 @@ type api struct {
 	desc.UnimplementedOcpRepoApiServer
 	repoStorage storage.RepoStorage
 	logProducer producer.Producer
+}
+
+func (a *api) Version(
+	ctx context.Context,
+	req *desc.VersionRequest,
+) (*desc.VersionResponse, error) {
+	return &desc.VersionResponse{Version: config.Version}, nil
 }
 
 func (a *api) ListRepos(
@@ -70,7 +78,7 @@ func (a *api) DescribeRepo(
 	}
 
 	repo, err := a.repoStorage.DescribeRepo(ctx, req.RepoId)
-	if err != nil {
+	if err != nil || repo == nil {
 		log.Error().Msgf("repoStorage.DescribeRepo() returns error: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -151,7 +159,7 @@ func (a *api) MultiCreateRepo(
 			return
 		}
 		err := a.logProducer.SendMessage(
-			producer.CreateProjectMultiEventMessage(producer.Created, indexes, time.Now()))
+			producer.CreateRepoMultiEventMessage(producer.Created, indexes, time.Now()))
 		if err != nil {
 			log.Warn().Msgf("MultiCreateProject: logProducer.SendMessage(...) returns error: %v", err)
 		}

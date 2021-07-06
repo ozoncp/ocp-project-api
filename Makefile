@@ -1,3 +1,5 @@
+version:=$$(git describe --long --tags 2>/dev/null | sed -e "s/v\([0-9]\+\)\.\([0-9]\+\)-\([0-9]\+\)-.\+/\1.\2.\3/")
+
 .PHONY: build
 build: vendor-proto .generate .build
 
@@ -33,14 +35,30 @@ PHONY: .generate
 
 PHONY: .build
 .build:
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
-		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
+		CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -o bin/ocp-project-api cmd/ocp-project-api/main.go cmd/ocp-project-api/runner.go
+		CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -o bin/ocp-repo-api cmd/ocp-repo-api/main.go cmd/ocp-repo-api/runner.go
 		CGO_ENABLED=0 GOOS=linux go build -o bin/ocp-simple-consumer cmd/ocp-simple-consumer/main.go
 
-PHONY: test
-test:
-		go test -coverprofile=coverage.out ./...
+PHONY: bfg_project
+bfg_project: .bfg_proj
+.bfg_proj:
+		CGO_ENABLED=0 GOOS=linux go build -o bin/project_gun ./BFG/project/project_gun.go
+		bin/project_gun ./BFG/project/project_load.yml
+
+PHONY: bfg_repo
+bfg_repo: .bfg_repo
+.bfg_repo:
+		CGO_ENABLED=0 GOOS=linux go build -o bin/repo_gun ./BFG/repo/repo_gun.go
+		bin/repo_gun ./BFG/repo/repo_load.yml
+
+PHONY: tests
+tests:
+		go test -ldflags "-X 'github.com/ozoncp/ocp-project-api/internal/config.Version=$(version)'" -coverprofile=coverage.out ./...
 		go tool cover -func=coverage.out
+
+PHONY: checks
+checks: tests
+		golangci-lint run ./...
 
 PHONY: install
 install: build .install
