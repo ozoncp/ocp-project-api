@@ -78,7 +78,7 @@ func (a *api) DescribeRepo(
 	}
 
 	repo, err := a.repoStorage.DescribeRepo(ctx, req.RepoId)
-	if err != nil {
+	if err != nil || repo == nil {
 		log.Error().Msgf("repoStorage.DescribeRepo() returns error: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}

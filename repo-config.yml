@@ -7,6 +7,7 @@ storage:
     user: lobanov
     db_name: ocp
     ssl_mode: disable
+    deletion: soft
 kafka:
     brokers:
         - 127.0.0.1:9094

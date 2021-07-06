@@ -314,6 +314,25 @@ var _ = Describe("Api", func() {
 		})
 	})
 
+	Context("describe project: not found", func() {
+
+		BeforeEach(func() {
+			describeRequest = &desc.DescribeProjectRequest{ProjectId: 1}
+
+			rows := sqlmock.NewRows([]string{"id", "course_id", "name"})
+			mock.ExpectQuery("SELECT (.+) FROM projects WHERE").
+				WithArgs(describeRequest.ProjectId, false).
+				WillReturnRows(rows)
+
+			describeResponse, err = grpcApi.DescribeProject(ctx, describeRequest)
+		})
+
+		It("", func() {
+			Expect(err).ShouldNot(BeNil())
+			Expect(describeResponse).Should(BeNil())
+		})
+	})
+
 	Context("describe project: invalid argument", func() {
 		BeforeEach(func() {
 			describeRequest = &desc.DescribeProjectRequest{ProjectId: 0}

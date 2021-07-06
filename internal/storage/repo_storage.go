@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/opentracing/opentracing-go"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
 	"github.com/rs/zerolog/log"
@@ -119,16 +120,35 @@ func (ps *repoStorage) MultiAddRepo(ctx context.Context, repos []models.Repo) ([
 }
 
 func (ps *repoStorage) RemoveRepo(ctx context.Context, repoId uint64) (bool, error) {
-	query := squirrel.Delete(repoTableName).
-		Where(squirrel.Eq{"id": repoId}).
-		RunWith(ps.db).
-		PlaceholderFormat(squirrel.Dollar)
+	var query interface{}
+	if config.Global.DB.IsSoftDeletion() {
+		query = squirrel.Update(repoTableName).
+			Set("deleted", true).
+			Where(squirrel.Eq{"id": repoId}).
+			Where(squirrel.Eq{"deleted": false}).
+			RunWith(ps.db).
+			PlaceholderFormat(squirrel.Dollar)
+	} else {
+		query = squirrel.Delete(repoTableName).
+			Where(squirrel.Eq{"id": repoId}).
+			Where(squirrel.Eq{"deleted": false}).
+			RunWith(ps.db).
+			PlaceholderFormat(squirrel.Dollar)
+
+	}
 
 	if err := ps.keepAliveDB(); err != nil {
 		return false, err
 	}
 
-	result, err := query.ExecContext(ctx)
+	var result sql.Result
+	var err error
+
+	if config.Global.DB.IsSoftDeletion() {
+		result, err = query.(squirrel.UpdateBuilder).ExecContext(ctx)
+	} else {
+		result, err = query.(squirrel.DeleteBuilder).ExecContext(ctx)
+	}
 	if err != nil {
 		return false, err
 	}
@@ -142,6 +162,7 @@ func (ps *repoStorage) DescribeRepo(ctx context.Context, repoId uint64) (*models
 	query := squirrel.Select("id", "project_id", "user_id", "link").
 		From(repoTableName).
 		Where(squirrel.Eq{"id": repoId}).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
@@ -160,12 +181,17 @@ func (ps *repoStorage) DescribeRepo(ctx context.Context, repoId uint64) (*models
 		return nil, err
 	}
 
+	if len(res) == 0 {
+		return nil, fmt.Errorf("Repo with id: %d not found", repoId)
+	}
+
 	return res[0], nil
 }
 
 func (ps *repoStorage) ListRepos(ctx context.Context, limit, offset uint64) ([]models.Repo, error) {
 	query := squirrel.Select("id", "project_id", "user_id", "link").
 		From(repoTableName).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		Limit(limit).
 		Offset(offset).
@@ -198,6 +224,7 @@ func (ps *repoStorage) UpdateRepo(ctx context.Context, repo models.Repo) (bool, 
 		Set("user_id", repo.UserId).
 		Set("link", repo.Link).
 		Where(squirrel.Eq{"id": repo.Id}).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
