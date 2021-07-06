@@ -38,11 +38,16 @@ type PostgresConfig struct {
 	Name      string `yaml:"db_name"`
 	Sslmode   string `yaml:"ssl_mode"`
 	ChunkSize int    `yaml:"chunk_size"`
+	Deletion  string `yaml:"deletion"`
 }
 
 type MetricsConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
+}
+
+func (p PostgresConfig) IsSoftDeletion() bool {
+	return p.Deletion == "soft"
 }
 
 var Global = Config{
@@ -63,6 +68,7 @@ var Global = Config{
 		Name:      "ocp",
 		Sslmode:   "disable",
 		ChunkSize: 1,
+		Deletion:  "hard",
 	},
 	Metrics: MetricsConfig{
 		Host: "0.0.0.0",

@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/opentracing/opentracing-go"
+	"github.com/ozoncp/ocp-project-api/internal/config"
 	"github.com/ozoncp/ocp-project-api/internal/models"
 	"github.com/ozoncp/ocp-project-api/internal/utils"
 	"github.com/rs/zerolog/log"
@@ -119,16 +120,36 @@ func (ps *projectStorage) MultiAddProject(ctx context.Context, projects []models
 }
 
 func (ps *projectStorage) RemoveProject(ctx context.Context, projectId uint64) (bool, error) {
-	query := squirrel.Delete(projectTableName).
-		Where(squirrel.Eq{"id": projectId}).
-		RunWith(ps.db).
-		PlaceholderFormat(squirrel.Dollar)
+	var query interface{}
+	if config.Global.DB.IsSoftDeletion() {
+		query = squirrel.Update(projectTableName).
+			Set("deleted", true).
+			Where(squirrel.Eq{"id": projectId}).
+			Where(squirrel.Eq{"deleted": false}).
+			RunWith(ps.db).
+			PlaceholderFormat(squirrel.Dollar)
+	} else {
+		query = squirrel.Delete(projectTableName).
+			Where(squirrel.Eq{"id": projectId}).
+			Where(squirrel.Eq{"deleted": false}).
+			RunWith(ps.db).
+			PlaceholderFormat(squirrel.Dollar)
+
+	}
 
 	if err := ps.keepAliveDB(); err != nil {
 		return false, err
 	}
 
-	result, err := query.ExecContext(ctx)
+	var result sql.Result
+	var err error
+
+	if config.Global.DB.IsSoftDeletion() {
+		result, err = query.(squirrel.UpdateBuilder).ExecContext(ctx)
+	} else {
+		result, err = query.(squirrel.DeleteBuilder).ExecContext(ctx)
+	}
+
 	if err != nil {
 		return false, err
 	}
@@ -142,6 +163,7 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 	query := squirrel.Select("id", "course_id", "name").
 		From(projectTableName).
 		Where(squirrel.Eq{"id": projectId}).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 
@@ -160,12 +182,17 @@ func (ps *projectStorage) DescribeProject(ctx context.Context, projectId uint64)
 		return nil, err
 	}
 
+	if len(res) == 0 {
+		return nil, fmt.Errorf("Project with id: %d not found", projectId)
+	}
+
 	return res[0], nil
 }
 
 func (ps *projectStorage) ListProjects(ctx context.Context, limit, offset uint64) ([]models.Project, error) {
 	query := squirrel.Select("id", "course_id", "name").
 		From(projectTableName).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		Limit(limit).
 		Offset(offset).
@@ -197,6 +224,7 @@ func (ps *projectStorage) UpdateProject(ctx context.Context, project models.Proj
 		Set("course_id", project.CourseId).
 		Set("name", project.Name).
 		Where(squirrel.Eq{"id": project.Id}).
+		Where(squirrel.Eq{"deleted": false}).
 		RunWith(ps.db).
 		PlaceholderFormat(squirrel.Dollar)
 

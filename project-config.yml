@@ -8,6 +8,7 @@ storage:
     db_name: ocp
     ssl_mode: disable
     chunk_size: 2
+    deletion: soft
 kafka:
     brokers:
         - 127.0.0.1:9094

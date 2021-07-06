@@ -77,7 +77,7 @@ func (a *api) DescribeProject(
 	}
 
 	project, err := a.projectStorage.DescribeProject(ctx, req.ProjectId)
-	if err != nil {
+	if err != nil || project == nil {
 		log.Error().Msgf("projectStorage.DescribeProject() returns error: %v", err)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
